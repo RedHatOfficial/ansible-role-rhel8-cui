@@ -1234,7 +1234,6 @@
   tags:
   - CCE-80666-1
   - CJIS-5.6.2.1.1
-  - DISA-STIG-RHEL-08-020220
   - NIST-800-171-3.5.8
   - NIST-800-53-IA-5(1)(e)
   - NIST-800-53-IA-5(f)
@@ -1269,7 +1268,6 @@
   tags:
   - CCE-80666-1
   - CJIS-5.6.2.1.1
-  - DISA-STIG-RHEL-08-020220
   - NIST-800-171-3.5.8
   - NIST-800-53-IA-5(1)(e)
   - NIST-800-53-IA-5(f)
@@ -1297,7 +1295,6 @@
   tags:
   - CCE-80666-1
   - CJIS-5.6.2.1.1
-  - DISA-STIG-RHEL-08-020220
   - NIST-800-171-3.5.8
   - NIST-800-53-IA-5(1)(e)
   - NIST-800-53-IA-5(f)
@@ -2463,6 +2460,7 @@
 - name: Disable Ctrl-Alt-Del Reboot Activation
   systemd:
     name: ctrl-alt-del.target
+    force: true
     masked: true
     state: stopped
   when:
@@ -2601,7 +2599,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-80644-8
-  - DISA-STIG-RHEL-08-020040
+  - DISA-STIG-RHEL-08-020039
   - NIST-800-171-3.1.10
   - NIST-800-53-CM-6(a)
   - enable_strategy
@@ -2770,7 +2768,7 @@
   tags:
   - CCE-80841-0
   - CJIS-5.5.2
-  - DISA-STIG-RHEL-08-020330
+  - DISA-STIG-RHEL-08-020331
   - NIST-800-171-3.1.1
   - NIST-800-171-3.1.5
   - NIST-800-53-CM-6(a)
@@ -2799,7 +2797,7 @@
   tags:
   - CCE-80841-0
   - CJIS-5.5.2
-  - DISA-STIG-RHEL-08-020330
+  - DISA-STIG-RHEL-08-020331
   - NIST-800-171-3.1.1
   - NIST-800-171-3.1.5
   - NIST-800-53-CM-6(a)
@@ -3086,6 +3084,40 @@
   - no_reboot_needed
   - package_audit_installed
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80872-5
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-08-030181
+  - NIST-800-171-3.3.1
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AC-6(9)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-AU-2(d)
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
+  - PCI-DSS-Req-10.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_auditd_enabled
+  when:
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_auditd_enabled | bool
+
 - name: Enable service auditd
   block:
   - name: Gather the package facts
@@ -3107,10 +3139,11 @@
   - no_reboot_needed | bool
   - service_auditd_enabled | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-80872-5
   - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-08-010560
+  - DISA-STIG-RHEL-08-030181
   - NIST-800-171-3.3.1
   - NIST-800-171-3.3.2
   - NIST-800-171-3.3.6
@@ -3122,6 +3155,7 @@
   - NIST-800-53-AU-2(d)
   - NIST-800-53-AU-3
   - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
   - PCI-DSS-Req-10.1
   - enable_strategy
   - low_complexity
@@ -3159,7 +3193,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -3244,7 +3279,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -3293,6 +3329,28 @@
   - reboot_required
   - restrict_strategy
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80680-2
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AU-11
+  - NIST-800-53-CM-6(a)
+  - auditd_data_retention_flush
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_data_retention_flush | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
 - name: Configure auditd Flush Priority
   lineinfile:
     dest: /etc/audit/auditd.conf
@@ -3307,7 +3365,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-80680-2
   - NIST-800-171-3.3.1
@@ -3319,6 +3377,25 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82258-5
+  - auditd_freq
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_freq | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
 
 - name: Set number of records to cause an explicit flush to audit logs
   block:
@@ -3352,7 +3429,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82258-5
   - auditd_freq
@@ -3361,6 +3438,26 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82233-8
+  - DISA-STIG-RHEL-08-030061
+  - auditd_local_events
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_local_events | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
 
 - name: Include Local Events in Audit Logs
   block:
@@ -3394,7 +3491,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82233-8
   - DISA-STIG-RHEL-08-030061
@@ -3404,6 +3501,26 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82201-5
+  - DISA-STIG-RHEL-08-030063
+  - auditd_log_format
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_log_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
 
 - name: Resolve information before writing to audit logs
   block:
@@ -3437,7 +3554,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82201-5
   - DISA-STIG-RHEL-08-030063
@@ -3447,6 +3564,26 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82897-0
+  - DISA-STIG-RHEL-08-030062
+  - auditd_name_format
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_name_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
 
 - name: Set hostname as computer node name in audit logs
   block:
@@ -3480,7 +3617,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82897-0
   - DISA-STIG-RHEL-08-030062
@@ -3490,6 +3627,25 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82366-6
+  - auditd_write_logs
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_write_logs | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
 
 - name: Write Audit Logs to the Disk
   block:
@@ -3523,7 +3679,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82366-6
   - auditd_write_logs
@@ -3548,6 +3704,28 @@
 
       '
     force: true
+  when:
+  - audit_access_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82833-5
+  - NIST-800-53-AU-2(a)
+  - audit_access_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules
+    mode: o-rwx
   when:
   - audit_access_failed | bool
   - low_complexity | bool
@@ -3597,6 +3775,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-3-access-success.rules
+    mode: o-rwx
+  when:
+  - audit_access_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82834-3
+  - NIST-800-53-AU-2(a)
+  - audit_access_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/10-base-config.rules according to policy
   copy:
     dest: /etc/audit/rules.d/10-base-config.rules
@@ -3623,6 +3823,28 @@
 
       '
     force: true
+  when:
+  - audit_basic_configuration | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82827-7
+  - NIST-800-53-AU-2(a)
+  - audit_basic_configuration
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/10-base-config.rules
+    mode: o-rwx
   when:
   - audit_basic_configuration | bool
   - low_complexity | bool
@@ -3690,6 +3912,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules
+    mode: o-rwx
+  when:
+  - audit_create_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82374-0
+  - NIST-800-53-AU-2(a)
+  - audit_create_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/30-ospp-v42-1-create-success.rules according to policy
   copy:
     dest: /etc/audit/rules.d/30-ospp-v42-1-create-success.rules
@@ -3709,6 +3953,28 @@
 
       '
     force: true
+  when:
+  - audit_create_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82829-3
+  - NIST-800-53-AU-2(a)
+  - audit_create_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-1-create-success.rules
+    mode: o-rwx
   when:
   - audit_create_success | bool
   - low_complexity | bool
@@ -3760,6 +4026,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules
+    mode: o-rwx
+  when:
+  - audit_delete_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82835-0
+  - NIST-800-53-AU-2(a)
+  - audit_delete_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules according to policy
   copy:
     dest: /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules
@@ -3789,6 +4077,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules
+    mode: o-rwx
+  when:
+  - audit_delete_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82836-8
+  - NIST-800-53-AU-2(a)
+  - audit_delete_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/11-loginuid.rules according to policy
   copy:
     dest: /etc/audit/rules.d/11-loginuid.rules
@@ -3798,6 +4108,29 @@
 
       '
     force: true
+  when:
+  - audit_immutable_login_uids | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82828-5
+  - DISA-STIG-RHEL-08-030122
+  - NIST-800-53-AU-2(a)
+  - audit_immutable_login_uids
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/11-loginuid.rules
+    mode: o-rwx
   when:
   - audit_immutable_login_uids | bool
   - low_complexity | bool
@@ -3866,6 +4199,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules
+    mode: o-rwx
+  when:
+  - audit_modify_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82830-1
+  - NIST-800-53-AU-2(a)
+  - audit_modify_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules according to policy
   copy:
     dest: /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules
@@ -3903,6 +4258,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules
+    mode: o-rwx
+  when:
+  - audit_modify_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82832-7
+  - NIST-800-53-AU-2(a)
+  - audit_modify_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/43-module-load.rules according to policy
   copy:
     dest: /etc/audit/rules.d/43-module-load.rules
@@ -3920,6 +4297,28 @@
 
       '
     force: true
+  when:
+  - audit_module_load | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82838-4
+  - NIST-800-53-AU-2(a)
+  - audit_module_load
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/43-module-load.rules
+    mode: o-rwx
   when:
   - audit_module_load | bool
   - low_complexity | bool
@@ -4108,6 +4507,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42.rules
+    mode: o-rwx
+  when:
+  - audit_ospp_general | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82373-2
+  - NIST-800-53-AU-2(a)
+  - audit_ospp_general
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules according to policy
   copy:
     dest: /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules
@@ -4141,6 +4562,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules
+    mode: o-rwx
+  when:
+  - audit_owner_change_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82384-9
+  - NIST-800-53-AU-2(a)
+  - audit_owner_change_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules according to policy
   copy:
     dest: /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules
@@ -4152,6 +4595,28 @@
 
       '
     force: true
+  when:
+  - audit_owner_change_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82385-6
+  - NIST-800-53-AU-2(a)
+  - audit_owner_change_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules
+    mode: o-rwx
   when:
   - audit_owner_change_success | bool
   - low_complexity | bool
@@ -4207,6 +4672,28 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules
+    mode: o-rwx
+  when:
+  - audit_perm_change_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82837-6
+  - NIST-800-53-AU-2(a)
+  - audit_perm_change_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Put contents into /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules according to policy
   copy:
     dest: /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules
@@ -4220,6 +4707,28 @@
 
       '
     force: true
+  when:
+  - audit_perm_change_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82383-1
+  - NIST-800-53-AU-2(a)
+  - audit_perm_change_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules
+    mode: o-rwx
   when:
   - audit_perm_change_success | bool
   - low_complexity | bool
@@ -4258,7 +4767,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -4325,7 +4835,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -4396,7 +4907,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -4445,25 +4957,6 @@
   - reboot_required
   - restrict_strategy
 
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-83321-0
-  - configure_strategy
-  - low_disruption
-  - medium_complexity
-  - medium_severity
-  - reboot_required
-  - zipl_audit_argument
-  when:
-  - configure_strategy | bool
-  - low_disruption | bool
-  - medium_complexity | bool
-  - medium_severity | bool
-  - reboot_required | bool
-  - zipl_audit_argument | bool
-
 - name: Ensure BLS boot entries options contain audit=1
   block:
   - name: 'Check how many boot entries exist '
@@ -4510,7 +5003,6 @@
   - medium_severity | bool
   - reboot_required | bool
   - zipl_audit_argument | bool
-  - '"s390utils-base" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83321-0
@@ -4520,25 +5012,6 @@
   - medium_severity
   - reboot_required
   - zipl_audit_argument
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-83341-8
-  - configure_strategy
-  - low_disruption
-  - medium_complexity
-  - medium_severity
-  - reboot_required
-  - zipl_audit_backlog_limit_argument
-  when:
-  - configure_strategy | bool
-  - low_disruption | bool
-  - medium_complexity | bool
-  - medium_severity | bool
-  - reboot_required | bool
-  - zipl_audit_backlog_limit_argument | bool
 
 - name: Ensure BLS boot entries options contain audit_backlog_limit=8192
   block:
@@ -4586,7 +5059,6 @@
   - medium_severity | bool
   - reboot_required | bool
   - zipl_audit_backlog_limit_argument | bool
-  - '"s390utils-base" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83341-8
@@ -4596,25 +5068,6 @@
   - medium_severity
   - reboot_required
   - zipl_audit_backlog_limit_argument
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-83486-1
-  - configure_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - zipl_bootmap_is_up_to_date
-  when:
-  - configure_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - zipl_bootmap_is_up_to_date | bool
 
 - name: Ensure zIPL bootmap is up to date
   block:
@@ -4637,7 +5090,6 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - zipl_bootmap_is_up_to_date | bool
-  - '"s390utils-base" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83486-1
@@ -4647,25 +5099,6 @@
   - medium_severity
   - no_reboot_needed
   - zipl_bootmap_is_up_to_date
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-83351-7
-  - configure_strategy
-  - low_disruption
-  - medium_complexity
-  - medium_severity
-  - reboot_required
-  - zipl_page_poison_argument
-  when:
-  - configure_strategy | bool
-  - low_disruption | bool
-  - medium_complexity | bool
-  - medium_severity | bool
-  - reboot_required | bool
-  - zipl_page_poison_argument | bool
 
 - name: Ensure BLS boot entries options contain page_poison=1
   block:
@@ -4713,7 +5146,6 @@
   - medium_severity | bool
   - reboot_required | bool
   - zipl_page_poison_argument | bool
-  - '"s390utils-base" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83351-7
@@ -4723,25 +5155,6 @@
   - medium_severity
   - reboot_required
   - zipl_page_poison_argument
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-83371-5
-  - configure_strategy
-  - low_disruption
-  - medium_complexity
-  - medium_severity
-  - reboot_required
-  - zipl_slub_debug_argument
-  when:
-  - configure_strategy | bool
-  - low_disruption | bool
-  - medium_complexity | bool
-  - medium_severity | bool
-  - reboot_required | bool
-  - zipl_slub_debug_argument | bool
 
 - name: Ensure BLS boot entries options contain slub_debug=P
   block:
@@ -4789,7 +5202,6 @@
   - medium_severity | bool
   - reboot_required | bool
   - zipl_slub_debug_argument | bool
-  - '"s390utils-base" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83371-5
@@ -4799,25 +5211,6 @@
   - medium_severity
   - reboot_required
   - zipl_slub_debug_argument
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-83381-4
-  - configure_strategy
-  - low_disruption
-  - medium_complexity
-  - medium_severity
-  - reboot_required
-  - zipl_vsyscall_argument
-  when:
-  - configure_strategy | bool
-  - low_disruption | bool
-  - medium_complexity | bool
-  - medium_severity | bool
-  - reboot_required | bool
-  - zipl_vsyscall_argument | bool
 
 - name: Ensure BLS boot entries options contain vsyscall=none
   block:
@@ -4865,7 +5258,6 @@
   - medium_severity | bool
   - reboot_required | bool
   - zipl_vsyscall_argument | bool
-  - '"s390utils-base" in ansible_facts.packages'
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83381-4
@@ -4966,7 +5358,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-80877-4
-  - DISA-STIG-RHEL-08-040100
+  - DISA-STIG-RHEL-08-040101
   - NIST-800-171-3.1.3
   - NIST-800-171-3.4.7
   - NIST-800-53-AC-4
@@ -5170,7 +5562,7 @@
   tags:
   - CCE-80917-8
   - CJIS-5.10.1.1
-  - DISA-STIG-RHEL-08-040280
+  - DISA-STIG-RHEL-08-040279
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -5199,7 +5591,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-81011-9
-  - DISA-STIG-RHEL-08-040240
+  - DISA-STIG-RHEL-08-040239
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -5314,7 +5706,7 @@
   tags:
   - CCE-80919-4
   - CJIS-5.10.1.1
-  - DISA-STIG-RHEL-08-040210
+  - DISA-STIG-RHEL-08-040209
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -5344,7 +5736,7 @@
   tags:
   - CCE-80920-2
   - CJIS-5.10.1.1
-  - DISA-STIG-RHEL-08-040250
+  - DISA-STIG-RHEL-08-040249
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9101,6 +9493,8 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82934-1
+  - DISA-STIG-RHEL-08-040286
+  - NIST-800-53-CM-6b
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9389,7 +9783,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -9460,7 +9855,8 @@
   - restrict_strategy | bool
 
 - name: get current kernel parameters
-  command: /usr/bin/grub2-editenv - list
+  ansible.builtin.shell:
+    cmd: /usr/bin/grub2-editenv - list | grep "kernelopts="
   register: kernelopts
   changed_when: false
   when:
@@ -9806,7 +10202,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82249-4
-  - DISA-STIG-RHEL-08-040135
+  - DISA-STIG-RHEL-08-040136
   - NIST-800-53-CM-6(a)
   - NIST-800-53-SI-4(22)
   - enable_strategy
@@ -9914,7 +10310,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-83303-8
-  - DISA-STIG-RHEL-08-040160
+  - DISA-STIG-RHEL-08-040159
   - NIST-800-53-CM-6(a)
   - enable_strategy
   - low_complexity
@@ -9939,7 +10335,6 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82880-6
-  - DISA-STIG-RHEL-08-040162
   - configure_strategy
   - low_complexity
   - low_disruption
@@ -9963,7 +10358,6 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82880-6
-  - DISA-STIG-RHEL-08-040162
   - configure_strategy
   - low_complexity
   - low_disruption
@@ -9987,7 +10381,6 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82880-6
-  - DISA-STIG-RHEL-08-040162
   - configure_strategy
   - low_complexity
   - low_disruption
@@ -10012,7 +10405,6 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82880-6
-  - DISA-STIG-RHEL-08-040162
   - configure_strategy
   - low_complexity
   - low_disruption
@@ -10252,7 +10644,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-80897-2
-  - DISA-STIG-RHEL-08-010521
+  - DISA-STIG-RHEL-08-010522
   - NIST-800-171-3.1.12
   - NIST-800-53-AC-17(a)
   - NIST-800-53-CM-6(a)
@@ -10554,7 +10946,7 @@
   tags:
   - CCE-80906-1
   - CJIS-5.5.6
-  - DISA-STIG-RHEL-08-010200
+  - DISA-STIG-RHEL-08-010201
   - NIST-800-171-3.1.11
   - NIST-800-53-AC-12
   - NIST-800-53-AC-17(a)
@@ -10675,7 +11067,7 @@
     state: present
   tags:
   - CCE-82959-8
-  - DISA-STIG-RHEL-08-040140
+  - DISA-STIG-RHEL-08-040139
   - enable_strategy
   - low_complexity
   - low_disruption
@@ -10713,7 +11105,7 @@
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-82853-3
-  - DISA-STIG-RHEL-08-040140
+  - DISA-STIG-RHEL-08-040141
   - NIST-800-53-CM-8(3)(a)
   - NIST-800-53-IA-3
   - enable_strategy
