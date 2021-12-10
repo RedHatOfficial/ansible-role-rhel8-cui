@@ -76,6 +76,7 @@
     create: true
   tags:
   - CCE-80935-0
+  - DISA-STIG-RHEL-08-010020
   - NIST-800-53-AC-17(2)
   - NIST-800-53-AC-17(a)
   - NIST-800-53-CM-6(a)
@@ -101,6 +102,7 @@
   command: /usr/bin/update-crypto-policies --set {{ var_system_crypto_policy }}
   tags:
   - CCE-80935-0
+  - DISA-STIG-RHEL-08-010020
   - NIST-800-53-AC-17(2)
   - NIST-800-53-AC-17(a)
   - NIST-800-53-CM-6(a)
@@ -129,6 +131,7 @@
     state: link
   tags:
   - CCE-80936-8
+  - DISA-STIG-RHEL-08-010020
   - NIST-800-53-SC-12(2)
   - NIST-800-53-SC-12(3)
   - NIST-800-53-SC-13
@@ -153,6 +156,7 @@
     create: true
   tags:
   - CCE-80937-6
+  - DISA-STIG-RHEL-08-010020
   - NIST-800-53-CM-6(a)
   - NIST-800-53-MA-4(6)
   - NIST-800-53-SC-12(2)
@@ -274,6 +278,7 @@
     regexp: ^\s*CRYPTO_POLICY.*$
   tags:
   - CCE-80939-2
+  - DISA-STIG-RHEL-08-010020
   - NIST-800-53-AC-17(2)
   - NIST-800-53-AC-17(a)
   - NIST-800-53-CM-6(a)
@@ -1283,6 +1288,60 @@
   replace:
     dest: /etc/pam.d/system-auth
     regexp: ^password\s+sufficient\s+pam_unix\.so\s(?!.*remember\s*=\s*).*$
+    replace: \g<0> remember={{ var_password_pam_unix_remember }}
+  when:
+  - accounts_password_pam_unix_remember | bool
+  - configure_strategy | bool
+  - low_complexity | bool
+  - medium_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - '"pam" in ansible_facts.packages'
+  tags:
+  - CCE-80666-1
+  - CJIS-5.6.2.1.1
+  - NIST-800-171-3.5.8
+  - NIST-800-53-IA-5(1)(e)
+  - NIST-800-53-IA-5(f)
+  - PCI-DSS-Req-8.2.5
+  - accounts_password_pam_unix_remember
+  - configure_strategy
+  - low_complexity
+  - medium_disruption
+  - medium_severity
+  - no_reboot_needed
+
+- name: Do not allow users to reuse recent passwords - system-auth (change)
+  replace:
+    dest: /etc/pam.d/system-auth
+    regexp: ^(password\s+(?:(?:requisite)|(?:required))\s+pam_pwhistory\.so\s.*remember\s*=\s*)(\S+)(.*)$
+    replace: \g<1>{{ var_password_pam_unix_remember }}\g<3>
+  when:
+  - accounts_password_pam_unix_remember | bool
+  - configure_strategy | bool
+  - low_complexity | bool
+  - medium_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - '"pam" in ansible_facts.packages'
+  tags:
+  - CCE-80666-1
+  - CJIS-5.6.2.1.1
+  - NIST-800-171-3.5.8
+  - NIST-800-53-IA-5(1)(e)
+  - NIST-800-53-IA-5(f)
+  - PCI-DSS-Req-8.2.5
+  - accounts_password_pam_unix_remember
+  - configure_strategy
+  - low_complexity
+  - medium_disruption
+  - medium_severity
+  - no_reboot_needed
+
+- name: Do not allow users to reuse recent passwords - system-auth (add)
+  replace:
+    dest: /etc/pam.d/system-auth
+    regexp: ^password\s+(?:(?:requisite)|(?:required))\s+pam_pwhistory\.so\s(?!.*remember\s*=\s*).*$
     replace: \g<0> remember={{ var_password_pam_unix_remember }}
   when:
   - accounts_password_pam_unix_remember | bool
@@ -2346,6 +2405,7 @@
   - CCE-80876-6
   - DISA-STIG-RHEL-08-040180
   - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6
   - disable_strategy
   - low_complexity
   - low_disruption
@@ -2372,6 +2432,7 @@
   - CCE-80876-6
   - DISA-STIG-RHEL-08-040180
   - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6
   - disable_strategy
   - low_complexity
   - low_disruption
@@ -2397,6 +2458,7 @@
   - CCE-80876-6
   - DISA-STIG-RHEL-08-040180
   - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6
   - disable_strategy
   - low_complexity
   - low_disruption
@@ -3383,6 +3445,7 @@
     manager: auto
   tags:
   - CCE-82258-5
+  - NIST-800-53-CM-6
   - auditd_freq
   - low_complexity
   - low_disruption
@@ -3432,6 +3495,7 @@
   - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82258-5
+  - NIST-800-53-CM-6
   - auditd_freq
   - low_complexity
   - low_disruption
@@ -3445,6 +3509,7 @@
   tags:
   - CCE-82233-8
   - DISA-STIG-RHEL-08-030061
+  - NIST-800-53-CM-6
   - auditd_local_events
   - low_complexity
   - low_disruption
@@ -3495,6 +3560,7 @@
   tags:
   - CCE-82233-8
   - DISA-STIG-RHEL-08-030061
+  - NIST-800-53-CM-6
   - auditd_local_events
   - low_complexity
   - low_disruption
@@ -3508,6 +3574,8 @@
   tags:
   - CCE-82201-5
   - DISA-STIG-RHEL-08-030063
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
   - auditd_log_format
   - low_complexity
   - low_disruption
@@ -3558,6 +3626,8 @@
   tags:
   - CCE-82201-5
   - DISA-STIG-RHEL-08-030063
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
   - auditd_log_format
   - low_complexity
   - low_disruption
@@ -3571,6 +3641,8 @@
   tags:
   - CCE-82897-0
   - DISA-STIG-RHEL-08-030062
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
   - auditd_name_format
   - low_complexity
   - low_disruption
@@ -3621,6 +3693,8 @@
   tags:
   - CCE-82897-0
   - DISA-STIG-RHEL-08-030062
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
   - auditd_name_format
   - low_complexity
   - low_disruption
@@ -3633,6 +3707,7 @@
     manager: auto
   tags:
   - CCE-82366-6
+  - NIST-800-53-CM-6
   - auditd_write_logs
   - low_complexity
   - low_disruption
@@ -3682,6 +3757,7 @@
   - '"audit" in ansible_facts.packages'
   tags:
   - CCE-82366-6
+  - NIST-800-53-CM-6
   - auditd_write_logs
   - low_complexity
   - low_disruption
@@ -6028,6 +6104,7 @@
   tags:
   - CCE-82028-2
   - DISA-STIG-RHEL-08-040021
+  - NIST-800-53-AC-18
   - disable_strategy
   - kernel_module_atm_disabled
   - low_complexity
@@ -6052,6 +6129,7 @@
   tags:
   - CCE-82059-7
   - DISA-STIG-RHEL-08-040022
+  - NIST-800-53-AC-18
   - disable_strategy
   - kernel_module_can_disabled
   - low_complexity
@@ -6075,6 +6153,7 @@
   tags:
   - CCE-82005-0
   - DISA-STIG-RHEL-08-040026
+  - NIST-800-53-AC-18
   - disable_strategy
   - kernel_module_firewire-core_disabled
   - low_complexity
@@ -9347,6 +9426,7 @@
   tags:
   - CCE-82215-5
   - DISA-STIG-RHEL-08-010671
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9398,6 +9478,7 @@
   tags:
   - CCE-80952-5
   - DISA-STIG-RHEL-08-010372
+  - NIST-800-53-CM-6
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9422,6 +9503,7 @@
   tags:
   - CCE-81054-9
   - DISA-STIG-RHEL-08-010376
+  - NIST-800-53-AC-6
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9446,6 +9528,8 @@
   tags:
   - CCE-82974-7
   - DISA-STIG-RHEL-08-040281
+  - NIST-800-53-AC-6
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9470,6 +9554,7 @@
   tags:
   - CCE-80953-3
   - DISA-STIG-RHEL-08-040282
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9494,7 +9579,8 @@
   tags:
   - CCE-82934-1
   - DISA-STIG-RHEL-08-040286
-  - NIST-800-53-CM-6b
+  - NIST-800-53-CM-6
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -9549,6 +9635,7 @@
   tags:
   - CCE-82881-4
   - DISA-STIG-RHEL-08-010672
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - low_disruption
@@ -9574,6 +9661,7 @@
   tags:
   - CCE-82881-4
   - DISA-STIG-RHEL-08-010672
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - low_disruption
@@ -9598,6 +9686,7 @@
   tags:
   - CCE-82881-4
   - DISA-STIG-RHEL-08-010672
+  - NIST-800-53-SC-7(10)
   - disable_strategy
   - low_complexity
   - low_disruption
@@ -9633,6 +9722,7 @@
   tags:
   - CCE-82251-0
   - DISA-STIG-RHEL-08-010675
+  - NIST-800-53-CM-6
   - coredump_disable_backtraces
   - low_complexity
   - low_disruption
@@ -9675,6 +9765,7 @@
   tags:
   - CCE-82252-8
   - DISA-STIG-RHEL-08-010674
+  - NIST-800-53-CM-6
   - coredump_disable_storage
   - low_complexity
   - low_disruption
@@ -9695,6 +9786,8 @@
   tags:
   - CCE-81038-2
   - DISA-STIG-RHEL-08-010673
+  - NIST-800-53-CM-6
+  - NIST-800-53-SC-7(10)
   - disable_users_coredumps
   - low_complexity
   - low_disruption
@@ -9726,6 +9819,8 @@
   tags:
   - CCE-81038-2
   - DISA-STIG-RHEL-08-010673
+  - NIST-800-53-CM-6
+  - NIST-800-53-SC-7(10)
   - disable_users_coredumps
   - low_complexity
   - low_disruption
@@ -10748,7 +10843,6 @@
   - DISA-STIG-RHEL-08-010550
   - NIST-800-171-3.1.1
   - NIST-800-171-3.1.5
-  - NIST-800-53-
   - NIST-800-53-AC-17(a)
   - NIST-800-53-AC-6(2)
   - NIST-800-53-CM-6(a)
@@ -11068,6 +11162,8 @@
   tags:
   - CCE-82959-8
   - DISA-STIG-RHEL-08-040139
+  - NIST-800-53-CM-8(3)
+  - NIST-800-53-IA-3
   - enable_strategy
   - low_complexity
   - low_disruption
