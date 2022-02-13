@@ -134,7 +134,7 @@ mount_option_home_nodev: true
 mount_option_home_nosuid: true
 mount_option_nodev_nonroot_local_partitions: true
 mount_option_tmp_nodev: true
-mount_option_tmp_noexec: true
+mount_option_tmp_noexec: false
 mount_option_tmp_nosuid: true
 mount_option_var_log_audit_nodev: true
 mount_option_var_log_audit_noexec: true
@@ -144,7 +144,7 @@ mount_option_var_log_noexec: true
 mount_option_var_log_nosuid: true
 mount_option_var_nodev: true
 mount_option_var_tmp_nodev: true
-mount_option_var_tmp_noexec: true
+mount_option_var_tmp_noexec: false
 mount_option_var_tmp_nosuid: true
 no_empty_passwords: true
 no_reboot_needed: true
@@ -155,8 +155,9 @@ package_audit_installed: true
 package_chrony_installed: true
 package_fapolicyd_installed: true
 package_firewalld_installed: true
-package_gssproxy_removed: true
+package_gssproxy_removed: false
 package_iprutils_removed: true
+package_nfs_utils_removed: false
 package_policycoreutils_installed: true
 package_rsyslog_installed: true
 package_sendmail_removed: true
@@ -180,7 +181,7 @@ ssh_client_use_strong_rng_sh: true
 sshd_disable_empty_passwords: true
 sshd_disable_gssapi_auth: true
 sshd_disable_kerb_auth: true
-sshd_disable_root_login: true
+sshd_disable_root_login: false
 sshd_enable_strictmodes: true
 sshd_enable_warning_banner: true
 sshd_rekey_limit: true
