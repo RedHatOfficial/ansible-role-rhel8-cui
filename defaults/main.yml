@@ -105,7 +105,7 @@ ensure_gpgcheck_never_disabled: true
 ensure_redhat_gpgkey_installed: true
 grub2_audit_argument: true
 grub2_audit_backlog_limit_argument: true
-grub2_disable_interactive_boot: true
+grub2_disable_interactive_boot: false
 grub2_kernel_trust_cpu_rng: true
 grub2_page_poison_argument: true
 grub2_pti_argument: true
