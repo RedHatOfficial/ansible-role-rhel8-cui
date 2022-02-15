@@ -94,7 +94,7 @@ coredump_disable_backtraces: true
 coredump_disable_storage: true
 disable_ctrlaltdel_burstaction: true
 disable_ctrlaltdel_reboot: true
-disable_host_auth: false
+disable_host_auth: true
 disable_strategy: true
 disable_users_coredumps: true
 enable_fips_mode: true
