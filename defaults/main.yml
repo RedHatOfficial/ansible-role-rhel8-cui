@@ -36,13 +36,15 @@ sysctl_net_ipv4_conf_default_secure_redirects_value: '0'
 sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value: '1'
 sysctl_net_ipv4_icmp_ignore_bogus_error_responses_value: '1'
 sysctl_net_ipv4_tcp_syncookies_value: '1'
+sysctl_kernel_kptr_restrict_value: '1'
+var_slub_debug_options: P
 var_selinux_policy_name: targeted
 var_selinux_state: enforcing
 var_ssh_client_rekey_limit_size: 1G
 var_ssh_client_rekey_limit_time: 1h
+sshd_idle_timeout_value: '840'
 var_rekey_limit_size: 1G
 var_rekey_limit_time: 1h
-sshd_idle_timeout_value: '840'
 accounts_max_concurrent_login_sessions: true
 accounts_password_minlen_login_defs: true
 accounts_password_pam_dcredit: true
