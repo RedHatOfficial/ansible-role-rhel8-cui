@@ -78,13 +78,14 @@ audit_owner_change_failed: true
 audit_owner_change_success: true
 audit_perm_change_failed: true
 audit_perm_change_success: true
-auditd_audispd_syslog_plugin_activated: true
 auditd_data_retention_flush: true
 auditd_freq: true
 auditd_local_events: true
 auditd_log_format: true
 auditd_name_format: true
 auditd_write_logs: true
+chronyd_client_only: true
+chronyd_no_chronyc_network: true
 configure_crypto_policy: true
 configure_kerberos_crypto_policy: true
 configure_libreswan_crypto_policy: true
@@ -100,6 +101,7 @@ disable_ctrlaltdel_reboot: true
 disable_host_auth: true
 disable_strategy: true
 disable_users_coredumps: true
+enable_dracut_fips_module: true
 enable_fips_mode: true
 enable_strategy: true
 ensure_gpgcheck_globally_activated: true
@@ -116,6 +118,7 @@ grub2_slub_debug_argument: true
 grub2_vsyscall_argument: true
 high_disruption: true
 high_severity: true
+kerberos_disable_no_keytab: true
 kernel_module_atm_disabled: true
 kernel_module_bluetooth_disabled: true
 kernel_module_can_disabled: true
@@ -225,6 +228,7 @@ sysctl_net_ipv6_conf_default_accept_source_route: true
 sysctl_user_max_user_namespaces: true
 unknown_severity: true
 unknown_strategy: true
+usbguard_allow_hid_and_hub: true
 use_pam_wheel_for_su: true
 zipl_audit_argument: true
 zipl_audit_backlog_limit_argument: true
