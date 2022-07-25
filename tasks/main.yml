@@ -27,6 +27,90 @@
   command: /usr/bin/fips-mode-setup --check
   register: is_fips_enabled
   changed_when: false
+  failed_when: false
+  when:
+  - enable_dracut_fips_module | bool
+  - high_severity | bool
+  - medium_complexity | bool
+  - medium_disruption | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82155-3
+  - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IA-7
+  - NIST-800-53-SC-12
+  - NIST-800-53-SC-12(2)
+  - NIST-800-53-SC-12(3)
+  - NIST-800-53-SC-13
+  - enable_dracut_fips_module
+  - high_severity
+  - medium_complexity
+  - medium_disruption
+  - reboot_required
+  - restrict_strategy
+
+- name: Enable FIPS mode
+  command: /usr/bin/fips-mode-setup --enable
+  when:
+  - enable_dracut_fips_module | bool
+  - high_severity | bool
+  - medium_complexity | bool
+  - medium_disruption | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - is_fips_enabled.stdout.find('FIPS mode is enabled.') == -1
+  tags:
+  - CCE-82155-3
+  - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IA-7
+  - NIST-800-53-SC-12
+  - NIST-800-53-SC-12(2)
+  - NIST-800-53-SC-12(3)
+  - NIST-800-53-SC-13
+  - enable_dracut_fips_module
+  - high_severity
+  - medium_complexity
+  - medium_disruption
+  - reboot_required
+  - restrict_strategy
+
+- name: Enable Dracut FIPS Module
+  lineinfile:
+    path: /etc/dracut.conf.d/40-fips.conf
+    line: add_dracutmodules+=" fips "
+  when:
+  - enable_dracut_fips_module | bool
+  - high_severity | bool
+  - medium_complexity | bool
+  - medium_disruption | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82155-3
+  - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IA-7
+  - NIST-800-53-SC-12
+  - NIST-800-53-SC-12(2)
+  - NIST-800-53-SC-12(3)
+  - NIST-800-53-SC-13
+  - enable_dracut_fips_module
+  - high_severity
+  - medium_complexity
+  - medium_disruption
+  - reboot_required
+  - restrict_strategy
+
+- name: Check to see the current status of FIPS mode
+  command: /usr/bin/fips-mode-setup --check
+  register: is_fips_enabled
+  changed_when: false
   when:
   - enable_fips_mode | bool
   - high_severity | bool
@@ -38,6 +122,7 @@
   tags:
   - CCE-80942-6
   - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-3(6)
   - NIST-800-53-CM-6(a)
   - NIST-800-53-IA-7
   - NIST-800-53-SC-12
@@ -65,6 +150,7 @@
   tags:
   - CCE-80942-6
   - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-3(6)
   - NIST-800-53-CM-6(a)
   - NIST-800-53-IA-7
   - NIST-800-53-SC-12
@@ -95,6 +181,7 @@
   tags:
   - CCE-80942-6
   - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-3(6)
   - NIST-800-53-CM-6(a)
   - NIST-800-53-IA-7
   - NIST-800-53-SC-12
@@ -121,6 +208,7 @@
   tags:
   - CCE-80942-6
   - DISA-STIG-RHEL-08-010020
+  - NIST-800-53-CM-3(6)
   - NIST-800-53-CM-6(a)
   - NIST-800-53-IA-7
   - NIST-800-53-SC-12
@@ -360,7 +448,7 @@
   lineinfile:
     dest: /etc/sysconfig/sshd
     state: absent
-    regexp: ^\s*CRYPTO_POLICY.*$
+    regexp: ^\s*(?i)CRYPTO_POLICY.*$
   tags:
   - CCE-80939-2
   - DISA-STIG-RHEL-08-010287
@@ -3309,6 +3397,33 @@
   - reboot_required | bool
   - restrict_strategy | bool
 
+- name: Verify GRUB_DISABLE_RECOVERY=true
+  lineinfile:
+    path: /etc/default/grub
+    regexp: ^GRUB_DISABLE_RECOVERY=.*
+    line: GRUB_DISABLE_RECOVERY=true
+    state: present
+  when:
+  - grub2_disable_interactive_boot | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-80826-1
+  - NIST-800-171-3.1.2
+  - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SC-2(1)
+  - grub2_disable_interactive_boot
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
 - name: Verify that Interactive Boot is Disabled in /etc/default/grub
   replace:
     dest: /etc/default/grub
@@ -3337,6 +3452,29 @@
 
 - name: Verify that Interactive Boot is Disabled (runtime)
   command: /sbin/grubby --update-kernel=ALL --remove-args="systemd.confirm_spawn"
+  when:
+  - grub2_disable_interactive_boot | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-80826-1
+  - NIST-800-171-3.1.2
+  - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SC-2(1)
+  - grub2_disable_interactive_boot
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - reboot_required
+  - restrict_strategy
+
+- name: Regen grub.cfg handle updated GRUB_DISABLE_RECOVERY and confirm_spawn
+  command: grub2-mkconfig -o  /boot/grub2/grub.cfg
   when:
   - grub2_disable_interactive_boot | bool
   - low_complexity | bool
@@ -4006,7 +4144,7 @@
 - name: Replace user umask in /etc/profile
   replace:
     path: /etc/profile
-    regexp: umask.*
+    regexp: ^[^#]*umask
     replace: umask {{ var_accounts_user_umask }}
   register: umask_replace
   tags:
@@ -4052,26 +4190,6 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
-
-- name: Ensure audispd-plugins is installed
-  package:
-    name: audispd-plugins
-    state: present
-  when:
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82953-1
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - package_audispd-plugins_installed
 
 - name: Ensure audit is installed
   package:
@@ -4281,58 +4399,6 @@
   - medium_complexity
   - reboot_required
   - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-80677-8
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AU-4(1)
-  - NIST-800-53-CM-6(a)
-  - PCI-DSS-Req-10.5.3
-  - auditd_audispd_syslog_plugin_activated
-  - configure_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  when:
-  - auditd_audispd_syslog_plugin_activated | bool
-  - configure_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-
-- name: enable syslog plugin
-  lineinfile:
-    dest: /etc/audit/plugins.d/syslog.conf
-    regexp: ^active
-    line: active = yes
-    create: true
-  when:
-  - auditd_audispd_syslog_plugin_activated | bool
-  - configure_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - '"audit" in ansible_facts.packages'
-  tags:
-  - CCE-80677-8
-  - CJIS-5.4.1.1
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AU-4(1)
-  - NIST-800-53-CM-6(a)
-  - PCI-DSS-Req-10.5.3
-  - auditd_audispd_syslog_plugin_activated
-  - configure_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
 
 - name: Gather the package facts
   package_facts:
@@ -6214,27 +6280,6 @@
   - reboot_required
   - zipl_vsyscall_argument
 
-- name: Ensure rsyslog-gnutls is installed
-  package:
-    name: rsyslog-gnutls
-    state: present
-  when:
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82859-0
-  - DISA-STIG-RHEL-08-030680
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - package_rsyslog-gnutls_installed
-
 - name: Ensure rsyslog is installed
   package:
     name: rsyslog
@@ -6321,9 +6366,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.all.accept_ra.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6349,7 +6397,7 @@
 
 - name: Comment out any occurrences of net.ipv6.conf.all.accept_ra from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.all.accept_ra
     replace: '#net.ipv6.conf.all.accept_ra'
   loop: '{{ find_sysctl_d.files }}'
@@ -6405,9 +6453,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.all.accept_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6435,7 +6486,7 @@
 
 - name: Comment out any occurrences of net.ipv6.conf.all.accept_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.all.accept_redirects
     replace: '#net.ipv6.conf.all.accept_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -6495,9 +6546,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.all.accept_source_route.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6523,7 +6577,7 @@
 
 - name: Comment out any occurrences of net.ipv6.conf.all.accept_source_route from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.all.accept_source_route
     replace: '#net.ipv6.conf.all.accept_source_route'
   loop: '{{ find_sysctl_d.files }}'
@@ -6579,9 +6633,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.default.accept_ra.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6607,7 +6664,7 @@
 
 - name: Comment out any occurrences of net.ipv6.conf.default.accept_ra from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.default.accept_ra
     replace: '#net.ipv6.conf.default.accept_ra'
   loop: '{{ find_sysctl_d.files }}'
@@ -6663,9 +6720,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.default.accept_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6691,7 +6751,7 @@
 
 - name: Comment out any occurrences of net.ipv6.conf.default.accept_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.default.accept_redirects
     replace: '#net.ipv6.conf.default.accept_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -6747,9 +6807,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv6.conf.default.accept_source_route.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6777,7 +6840,7 @@
 
 - name: Comment out any occurrences of net.ipv6.conf.default.accept_source_route from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv6.conf.default.accept_source_route
     replace: '#net.ipv6.conf.default.accept_source_route'
   loop: '{{ find_sysctl_d.files }}'
@@ -6837,9 +6900,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.accept_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6867,7 +6933,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.all.accept_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.accept_redirects
     replace: '#net.ipv4.conf.all.accept_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -6927,9 +6993,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.accept_source_route.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -6957,7 +7026,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.all.accept_source_route from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.accept_source_route
     replace: '#net.ipv4.conf.all.accept_source_route'
   loop: '{{ find_sysctl_d.files }}'
@@ -7017,9 +7086,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.log_martians.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7044,7 +7116,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.all.log_martians from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.log_martians
     replace: '#net.ipv4.conf.all.log_martians'
   loop: '{{ find_sysctl_d.files }}'
@@ -7098,9 +7170,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.rp_filter.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7127,7 +7202,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.all.rp_filter from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.rp_filter
     replace: '#net.ipv4.conf.all.rp_filter'
   loop: '{{ find_sysctl_d.files }}'
@@ -7185,9 +7260,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.secure_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7213,7 +7291,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.all.secure_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.secure_redirects
     replace: '#net.ipv4.conf.all.secure_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -7269,9 +7347,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.accept_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7299,7 +7380,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.default.accept_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.accept_redirects
     replace: '#net.ipv4.conf.default.accept_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -7359,9 +7440,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.accept_source_route.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7389,7 +7473,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.default.accept_source_route from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.accept_source_route
     replace: '#net.ipv4.conf.default.accept_source_route'
   loop: '{{ find_sysctl_d.files }}'
@@ -7449,9 +7533,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.log_martians.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7476,7 +7563,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.default.log_martians from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.log_martians
     replace: '#net.ipv4.conf.default.log_martians'
   loop: '{{ find_sysctl_d.files }}'
@@ -7530,9 +7617,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.rp_filter.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7558,7 +7648,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.default.rp_filter from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.rp_filter
     replace: '#net.ipv4.conf.default.rp_filter'
   loop: '{{ find_sysctl_d.files }}'
@@ -7614,9 +7704,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.secure_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7642,7 +7735,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.default.secure_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.secure_redirects
     replace: '#net.ipv4.conf.default.secure_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -7698,9 +7791,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.icmp_echo_ignore_broadcasts.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7727,7 +7823,7 @@
 
 - name: Comment out any occurrences of net.ipv4.icmp_echo_ignore_broadcasts from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.icmp_echo_ignore_broadcasts
     replace: '#net.ipv4.icmp_echo_ignore_broadcasts'
   loop: '{{ find_sysctl_d.files }}'
@@ -7785,9 +7881,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.icmp_ignore_bogus_error_responses.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7812,7 +7911,7 @@
 
 - name: Comment out any occurrences of net.ipv4.icmp_ignore_bogus_error_responses from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.icmp_ignore_bogus_error_responses
     replace: '#net.ipv4.icmp_ignore_bogus_error_responses'
   loop: '{{ find_sysctl_d.files }}'
@@ -7866,9 +7965,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.tcp_syncookies.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7897,7 +7999,7 @@
 
 - name: Comment out any occurrences of net.ipv4.tcp_syncookies from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.tcp_syncookies
     replace: '#net.ipv4.tcp_syncookies'
   loop: '{{ find_sysctl_d.files }}'
@@ -7959,9 +8061,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.all.send_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -7990,7 +8095,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.all.send_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.all.send_redirects
     replace: '#net.ipv4.conf.all.send_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -8052,9 +8157,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.conf.default.send_redirects.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -8083,7 +8191,7 @@
 
 - name: Comment out any occurrences of net.ipv4.conf.default.send_redirects from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.conf.default.send_redirects
     replace: '#net.ipv4.conf.default.send_redirects'
   loop: '{{ find_sysctl_d.files }}'
@@ -8145,9 +8253,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.ipv4.ip_forward.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -8175,7 +8286,7 @@
 
 - name: Comment out any occurrences of net.ipv4.ip_forward from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.ipv4.ip_forward
     replace: '#net.ipv4.ip_forward'
   loop: '{{ find_sysctl_d.files }}'
@@ -8397,9 +8508,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*fs.protected_hardlinks.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -8423,7 +8537,7 @@
 
 - name: Comment out any occurrences of fs.protected_hardlinks from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*fs.protected_hardlinks
     replace: '#fs.protected_hardlinks'
   loop: '{{ find_sysctl_d.files }}'
@@ -8475,9 +8589,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*fs.protected_symlinks.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -8501,7 +8618,7 @@
 
 - name: Comment out any occurrences of fs.protected_symlinks from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*fs.protected_symlinks
     replace: '#fs.protected_symlinks'
   loop: '{{ find_sysctl_d.files }}'
@@ -11661,9 +11778,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.core_pattern.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -11686,7 +11806,7 @@
 
 - name: Comment out any occurrences of kernel.core_pattern from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.core_pattern
     replace: '#kernel.core_pattern'
   loop: '{{ find_sysctl_d.files }}'
@@ -11736,9 +11856,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.dmesg_restrict.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -11763,7 +11886,7 @@
 
 - name: Comment out any occurrences of kernel.dmesg_restrict from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.dmesg_restrict
     replace: '#kernel.dmesg_restrict'
   loop: '{{ find_sysctl_d.files }}'
@@ -11817,9 +11940,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.kexec_load_disabled.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -11842,7 +11968,7 @@
 
 - name: Comment out any occurrences of kernel.kexec_load_disabled from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.kexec_load_disabled
     replace: '#kernel.kexec_load_disabled'
   loop: '{{ find_sysctl_d.files }}'
@@ -11892,9 +12018,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.perf_event_paranoid.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -11917,7 +12046,7 @@
 
 - name: Comment out any occurrences of kernel.perf_event_paranoid from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.perf_event_paranoid
     replace: '#kernel.perf_event_paranoid'
   loop: '{{ find_sysctl_d.files }}'
@@ -11967,9 +12096,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.unprivileged_bpf_disabled.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -11993,7 +12125,7 @@
 
 - name: Comment out any occurrences of kernel.unprivileged_bpf_disabled from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.unprivileged_bpf_disabled
     replace: '#kernel.unprivileged_bpf_disabled'
   loop: '{{ find_sysctl_d.files }}'
@@ -12045,9 +12177,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.yama.ptrace_scope.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -12070,7 +12205,7 @@
 
 - name: Comment out any occurrences of kernel.yama.ptrace_scope from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.yama.ptrace_scope
     replace: '#kernel.yama.ptrace_scope'
   loop: '{{ find_sysctl_d.files }}'
@@ -12120,9 +12255,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*net.core.bpf_jit_harden.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -12146,7 +12284,7 @@
 
 - name: Comment out any occurrences of net.core.bpf_jit_harden from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*net.core.bpf_jit_harden
     replace: '#net.core.bpf_jit_harden'
   loop: '{{ find_sysctl_d.files }}'
@@ -12198,9 +12336,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*user.max_user_namespaces.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -12224,7 +12365,7 @@
 
 - name: Comment out any occurrences of user.max_user_namespaces from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*user.max_user_namespaces
     replace: '#user.max_user_namespaces'
   loop: '{{ find_sysctl_d.files }}'
@@ -12488,9 +12629,12 @@
 
 - name: List /etc/sysctl.d/*.conf files
   find:
-    paths: /etc/sysctl.d/
+    paths:
+    - /etc/sysctl.d/
+    - /run/sysctl.d/
     contains: ^[\s]*kernel.kptr_restrict.*$
     patterns: '*.conf'
+    file_type: any
   register: find_sysctl_d
   when:
   - disable_strategy | bool
@@ -12516,7 +12660,7 @@
 
 - name: Comment out any occurrences of kernel.kptr_restrict from /etc/sysctl.d/*.conf files
   replace:
-    path: '{{ item }}'
+    path: '{{ item.path }}'
     regexp: ^[\s]*kernel.kptr_restrict
     replace: '#kernel.kptr_restrict'
   loop: '{{ find_sysctl_d.files }}'
@@ -12961,6 +13105,52 @@
   - no_reboot_needed
   - service_fapolicyd_enabled
 
+- name: Find keytab files
+  find:
+    paths: /etc/
+    patterns: '*.keytab'
+  register: keytab_files
+  when:
+  - disable_strategy | bool
+  - kerberos_disable_no_keytab | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82175-1
+  - DISA-STIG-RHEL-08-010161
+  - disable_strategy
+  - kerberos_disable_no_keytab
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+
+- name: Remove keytab files
+  file:
+    path: '{{ item.path }}'
+    state: absent
+  with_items: '{{ keytab_files.files }}'
+  when:
+  - disable_strategy | bool
+  - kerberos_disable_no_keytab | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82175-1
+  - DISA-STIG-RHEL-08-010161
+  - disable_strategy
+  - kerberos_disable_no_keytab
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+
 - name: Ensure sendmail is removed
   package:
     name: sendmail
@@ -13025,6 +13215,95 @@
   - medium_severity
   - no_reboot_needed
   - package_chrony_installed
+
+- name: Disable chrony daemon from acting as server
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/chrony.conf
+      create: false
+      regexp: ^\s*port\s+
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/chrony.conf
+    lineinfile:
+      path: /etc/chrony.conf
+      create: false
+      regexp: ^\s*port\s+
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/chrony.conf
+    lineinfile:
+      path: /etc/chrony.conf
+      create: true
+      regexp: ^\s*port\s+
+      line: port 0
+      state: present
+  when:
+  - chronyd_client_only | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82988-7
+  - DISA-STIG-RHEL-08-030741
+  - NIST-800-53-AU-12(1)
+  - NIST-800-53-AU-8(1)
+  - chronyd_client_only
+  - low_complexity
+  - low_disruption
+  - low_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Disable network management of chrony daemon
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/chrony.conf
+      create: false
+      regexp: ^\s*cmdport\s+
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/chrony.conf
+    lineinfile:
+      path: /etc/chrony.conf
+      create: false
+      regexp: ^\s*cmdport\s+
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/chrony.conf
+    lineinfile:
+      path: /etc/chrony.conf
+      create: true
+      regexp: ^\s*cmdport\s+
+      line: cmdport 0
+      state: present
+  when:
+  - chronyd_no_chronyc_network | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82840-0
+  - DISA-STIG-RHEL-08-030742
+  - NIST-800-53-CM-7(1)
+  - chronyd_no_chronyc_network
+  - low_complexity
+  - low_disruption
+  - low_severity
+  - no_reboot_needed
+  - restrict_strategy
 
 - name: Ensure openssh-clients is installed
   package:
@@ -13864,3 +14143,27 @@
   - medium_severity
   - no_reboot_needed
   - service_usbguard_enabled
+
+- name: allow HID devices and hubs
+  lineinfile:
+    path: /etc/usbguard/rules.conf
+    create: true
+    line: allow with-interface match-all { 03:*:* 09:00:* }
+    state: present
+  tags:
+  - CCE-82368-2
+  - NIST-800-53-CM-8(3)
+  - NIST-800-53-IA-3
+  - configure_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - usbguard_allow_hid_and_hub
+  when:
+  - configure_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - usbguard_allow_hid_and_hub | bool
