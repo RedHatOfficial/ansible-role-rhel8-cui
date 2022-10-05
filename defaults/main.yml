@@ -1,7 +1,7 @@
 ---
 # defaults file for rhel8_cui
 var_system_crypto_policy: FIPS:OSPP
-var_authselect_profile: sssd
+var_authselect_profile: minimal
 var_password_pam_unix_remember: '5'
 var_accounts_passwords_pam_faillock_deny: '3'
 var_accounts_passwords_pam_faillock_fail_interval: '900'
@@ -52,6 +52,8 @@ DISA_STIG_RHEL_08_010161: true
 DISA_STIG_RHEL_08_010162: true
 DISA_STIG_RHEL_08_010170: true
 DISA_STIG_RHEL_08_010171: true
+DISA_STIG_RHEL_08_010200: true
+DISA_STIG_RHEL_08_010201: true
 DISA_STIG_RHEL_08_010287: true
 DISA_STIG_RHEL_08_010292: true
 DISA_STIG_RHEL_08_010293: true
@@ -153,7 +155,6 @@ DISA_STIG_RHEL_08_040239: true
 DISA_STIG_RHEL_08_040240: true
 DISA_STIG_RHEL_08_040249: true
 DISA_STIG_RHEL_08_040250: true
-DISA_STIG_RHEL_08_040259: true
 DISA_STIG_RHEL_08_040261: true
 DISA_STIG_RHEL_08_040262: true
 DISA_STIG_RHEL_08_040270: true
@@ -232,7 +233,7 @@ ensure_gpgcheck_never_disabled: true
 ensure_redhat_gpgkey_installed: true
 grub2_audit_argument: true
 grub2_audit_backlog_limit_argument: true
-grub2_disable_interactive_boot: true
+grub2_disable_recovery: true
 grub2_kernel_trust_cpu_rng: true
 grub2_page_poison_argument: true
 grub2_pti_argument: true
