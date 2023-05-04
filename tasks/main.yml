@@ -37,7 +37,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   tags:
   - CCE-82155-3
   - DISA-STIG-RHEL-08-010020
@@ -64,7 +65,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   - is_fips_enabled.stdout.find('FIPS mode is enabled.') == -1
   tags:
   - CCE-82155-3
@@ -94,7 +96,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   tags:
   - CCE-82155-3
   - DISA-STIG-RHEL-08-010020
@@ -123,6 +126,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-80942-6
@@ -151,6 +156,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   - is_fips_enabled.stdout.find('FIPS mode is enabled.') == -1
   tags:
@@ -184,6 +191,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-80942-6
@@ -212,6 +221,8 @@
   - medium_disruption | bool
   - reboot_required | bool
   - restrict_strategy | bool
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and not ( lookup("env", "container")
+    == "bwrap-osbuild" ) )
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
   tags:
   - CCE-80942-6
@@ -4617,40 +4628,6 @@
   - low_disruption
   - no_reboot_needed
 
-- name: Set 'StopIdleSessionSec' to '{{ var_logind_session_timeout }}' in the [Login] section of '/etc/systemd/logind.conf'
-  ini_file:
-    path: /etc/systemd/logind.conf
-    section: Login
-    option: StopIdleSessionSec
-    value: '{{ var_logind_session_timeout }}'
-    create: true
-    mode: 420
-  tags:
-  - CCE-90784-0
-  - CJIS-5.5.6
-  - NIST-800-171-3.1.11
-  - NIST-800-53-AC-12
-  - NIST-800-53-AC-17(a)
-  - NIST-800-53-AC-17(a)
-  - NIST-800-53-AC-2(5)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-SC-10
-  - PCI-DSS-Req-8.1.8
-  - logind_session_timeout
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - reboot_required
-  - restrict_strategy
-  when:
-  - logind_session_timeout | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-
 - name: require single user mode password
   lineinfile:
     create: true
@@ -4960,11 +4937,9 @@
   - restrict_strategy | bool
   - securetty_root_login_console_only | bool
 
-- name: restrict usage of su command only to members of wheel group
-  replace:
-    path: /etc/pam.d/su
-    regexp: ^[\s]*#[\s]*auth[\s]+required[\s]+pam_wheel\.so[\s]+use_uid$
-    replace: auth             required        pam_wheel.so use_uid
+- name: Gather the package facts
+  package_facts:
+    manager: auto
   tags:
   - CCE-83318-6
   - PCI-DSS-Req-8.6.1
@@ -4981,6 +4956,29 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
   - use_pam_wheel_for_su | bool
+
+- name: restrict usage of su command only to members of wheel group
+  replace:
+    path: /etc/pam.d/su
+    regexp: ^[\s]*#[\s]*auth[\s]+required[\s]+pam_wheel\.so[\s]+use_uid$
+    replace: auth             required        pam_wheel.so use_uid
+  when:
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - use_pam_wheel_for_su | bool
+  - '"pam" in ansible_facts.packages'
+  tags:
+  - CCE-83318-6
+  - PCI-DSS-Req-8.6.1
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  - use_pam_wheel_for_su
 
 - name: Gather the package facts
   package_facts:
@@ -9625,7 +9623,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/atm.conf
-    regexp: atm
+    regexp: install\s+atm
     line: install atm /bin/true
   when:
   - DISA_STIG_RHEL_08_040021 | bool
@@ -9677,7 +9675,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/can.conf
-    regexp: can
+    regexp: install\s+can
     line: install can /bin/true
   when:
   - DISA_STIG_RHEL_08_040022 | bool
@@ -9729,7 +9727,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/firewire-core.conf
-    regexp: firewire-core
+    regexp: install\s+firewire-core
     line: install firewire-core /bin/true
   when:
   - DISA_STIG_RHEL_08_040026 | bool
@@ -9779,7 +9777,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/sctp.conf
-    regexp: sctp
+    regexp: install\s+sctp
     line: install sctp /bin/true
   when:
   - DISA_STIG_RHEL_08_040023 | bool
@@ -9841,7 +9839,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/tipc.conf
-    regexp: tipc
+    regexp: install\s+tipc
     line: install tipc /bin/true
   when:
   - DISA_STIG_RHEL_08_040024 | bool
@@ -9897,7 +9895,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/bluetooth.conf
-    regexp: bluetooth
+    regexp: install\s+bluetooth
     line: install bluetooth /bin/true
   when:
   - DISA_STIG_RHEL_08_040111 | bool
@@ -10133,7 +10131,7 @@
   lineinfile:
     create: true
     dest: /etc/modprobe.d/cramfs.conf
-    regexp: cramfs
+    regexp: install\s+cramfs
     line: install cramfs /bin/true
   when:
   - DISA_STIG_RHEL_08_040025 | bool
@@ -14136,6 +14134,28 @@
   - no_reboot_needed
   - service_systemd-coredump_disabled
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82251-0
+  - DISA-STIG-RHEL-08-010675
+  - NIST-800-53-CM-6
+  - coredump_disable_backtraces
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_010675 | bool
+  - coredump_disable_backtraces | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
 - name: Disable core dump backtraces
   block:
   - name: Check for duplicate values
@@ -14161,6 +14181,15 @@
       regexp: ^\s*ProcessSizeMax\s*=\s*
       line: ProcessSizeMax=0
       state: present
+  when:
+  - DISA_STIG_RHEL_08_010675 | bool
+  - coredump_disable_backtraces | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"systemd" in ansible_facts.packages'
   tags:
   - CCE-82251-0
   - DISA-STIG-RHEL-08-010675
@@ -14171,9 +14200,23 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82252-8
+  - DISA-STIG-RHEL-08-010674
+  - NIST-800-53-CM-6
+  - coredump_disable_storage
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
   when:
-  - DISA_STIG_RHEL_08_010675 | bool
-  - coredump_disable_backtraces | bool
+  - DISA_STIG_RHEL_08_010674 | bool
+  - coredump_disable_storage | bool
   - low_complexity | bool
   - low_disruption | bool
   - medium_severity | bool
@@ -14205,6 +14248,15 @@
       regexp: ^\s*Storage\s*=\s*
       line: Storage=none
       state: present
+  when:
+  - DISA_STIG_RHEL_08_010674 | bool
+  - coredump_disable_storage | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"systemd" in ansible_facts.packages'
   tags:
   - CCE-82252-8
   - DISA-STIG-RHEL-08-010674
@@ -14215,14 +14267,6 @@
   - medium_severity
   - no_reboot_needed
   - restrict_strategy
-  when:
-  - DISA_STIG_RHEL_08_010674 | bool
-  - coredump_disable_storage | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
 
 - name: Gather the package facts
   package_facts:
@@ -15784,7 +15828,8 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - package_usbguard_installed | bool
-  - ansible_architecture != "s390x"
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and ansible_architecture != "s390x"
+    )
   tags:
   - CCE-82959-8
   - DISA-STIG-RHEL-08-040139
@@ -15818,8 +15863,8 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - service_usbguard_enabled | bool
-  - ansible_architecture != "s390x"
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and ansible_architecture != "s390x"
+    )
   tags:
   - CCE-82853-3
   - DISA-STIG-RHEL-08-040141
@@ -15845,7 +15890,8 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - usbguard_allow_hid_and_hub | bool
-  - ansible_architecture != "s390x"
+  - ( ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"] and ansible_architecture != "s390x"
+    )
   tags:
   - CCE-82368-2
   - NIST-800-53-CM-8(3)
