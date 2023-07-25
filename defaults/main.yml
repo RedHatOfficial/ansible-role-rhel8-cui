@@ -207,6 +207,7 @@ auditd_name_format: true
 auditd_write_logs: true
 chronyd_client_only: true
 chronyd_no_chronyc_network: true
+configure_bashrc_exec_tmux: true
 configure_crypto_policy: true
 configure_kerberos_crypto_policy: true
 configure_libreswan_crypto_policy: true
