@@ -45,6 +45,7 @@ var_ssh_client_rekey_limit_time: 1h
 sshd_idle_timeout_value: '840'
 var_rekey_limit_size: 1G
 var_rekey_limit_time: 1h
+DISA_STIG_RHEL_08_010019: true
 DISA_STIG_RHEL_08_010020: true
 DISA_STIG_RHEL_08_010040: true
 DISA_STIG_RHEL_08_010151: true
@@ -83,7 +84,8 @@ DISA_STIG_RHEL_08_010674: true
 DISA_STIG_RHEL_08_010675: true
 DISA_STIG_RHEL_08_020011: true
 DISA_STIG_RHEL_08_020012: true
-DISA_STIG_RHEL_08_020016: true
+DISA_STIG_RHEL_08_020013: true
+DISA_STIG_RHEL_08_020015: true
 DISA_STIG_RHEL_08_020024: true
 DISA_STIG_RHEL_08_020039: true
 DISA_STIG_RHEL_08_020040: true
