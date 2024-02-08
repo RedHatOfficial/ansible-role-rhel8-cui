@@ -115,8 +115,8 @@
   - reboot_required
   - restrict_strategy
 
-- name: Check to see the current status of FIPS mode
-  command: /usr/bin/fips-mode-setup --check
+- name: Enable FIPS Mode - Check to See the Current Status of FIPS Mode
+  ansible.builtin.command: /usr/bin/fips-mode-setup --check
   register: is_fips_enabled
   ignore_errors: true
   changed_when: false
@@ -148,8 +148,8 @@
   - reboot_required
   - restrict_strategy
 
-- name: Enable FIPS mode
-  command: /usr/bin/fips-mode-setup --enable
+- name: Enable FIPS Mode - Enable FIPS Mode
+  ansible.builtin.command: /usr/bin/fips-mode-setup --enable
   when:
   - DISA_STIG_RHEL_08_010020 | bool
   - enable_fips_mode | bool
@@ -179,8 +179,8 @@
   - reboot_required
   - restrict_strategy
 
-- name: Enable FIPS Mode
-  lineinfile:
+- name: Enable FIPS Mode - Configure Crypto Policy
+  ansible.builtin.lineinfile:
     path: /etc/crypto-policies/config
     regexp: ^(?!#)(\S+)$
     line: '{{ var_system_crypto_policy }}'
@@ -213,8 +213,8 @@
   - reboot_required
   - restrict_strategy
 
-- name: Verify that Crypto Policy is Set (runtime)
-  command: /usr/bin/update-crypto-policies --set {{ var_system_crypto_policy }}
+- name: Enable FIPS Mode - Verify that Crypto Policy is Set (runtime)
+  ansible.builtin.command: /usr/bin/update-crypto-policies --set {{ var_system_crypto_policy }}
   when:
   - DISA_STIG_RHEL_08_010020 | bool
   - enable_fips_mode | bool
@@ -443,7 +443,8 @@
   - no_reboot_needed | bool
   - unknown_strategy | bool
 
-- name: '{{ rule_title }} - Add .include Line for opensslcnf.config File in crypto_policy Section'
+- name: Configure OpenSSL library to use System Crypto Policy - Add .include Line for opensslcnf.config File in crypto_policy
+    Section
   ansible.builtin.lineinfile:
     create: true
     insertafter: ^\s*\[\s*crypto_policy\s*]\s*
@@ -518,7 +519,7 @@
   lineinfile:
     dest: /etc/sysconfig/sshd
     state: absent
-    regexp: ^\s*(?i)CRYPTO_POLICY.*$
+    regexp: ^(?i)\s*CRYPTO_POLICY.*$
   tags:
   - CCE-80939-2
   - DISA-STIG-RHEL-08-010287
@@ -1744,7 +1745,7 @@
   - name: Limit Password Reuse - Check if expected PAM module line is present in {{ pam_file_path }}
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
-      regexp: ^\s*password\s+requisite\s+pam_pwhistory.so\s*.*
+      regexp: ^\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s*.*
       state: absent
     check_mode: true
     changed_when: false
@@ -2117,7 +2118,7 @@
   - name: Limit Password Reuse - Check if expected PAM module line is present in {{ pam_file_path }}
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
-      regexp: ^\s*password\s+requisite\s+pam_pwhistory.so\s*.*
+      regexp: ^\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s*.*
       state: absent
     check_mode: true
     changed_when: false
@@ -2161,7 +2162,7 @@
   - name: Limit Password Reuse - Check if the required PAM module option is present in {{ pam_file_path }}
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
-      regexp: ^\s*password\s+requisite\s+pam_pwhistory.so\s*.*\sremember\b
+      regexp: ^\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s*.*\sremember\b
       state: absent
     check_mode: true
     changed_when: false
@@ -2170,7 +2171,7 @@
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
       backrefs: true
-      regexp: ^(\s*password\s+requisite\s+pam_pwhistory.so.*)
+      regexp: ^(\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so.*)
       line: \1 remember={{ var_password_pam_unix_remember }}
       state: present
     register: result_pam_remember_add
@@ -2181,7 +2182,7 @@
     ansible.builtin.lineinfile:
       path: '{{ pam_file_path }}'
       backrefs: true
-      regexp: ^(\s*password\s+requisite\s+pam_pwhistory.so\s+.*)(remember)=[0-9a-zA-Z]+\s*(.*)
+      regexp: ^(\s*password\s+{{ 'requisite' | regex_escape() }}\s+pam_pwhistory.so\s+.*)(remember)=[0-9a-zA-Z]+\s*(.*)
       line: \1\2={{ var_password_pam_unix_remember }} \3
     register: result_pam_remember_edit
     when:
@@ -3484,6 +3485,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -3497,6 +3499,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -3510,6 +3513,7 @@
     path: /usr/bin/authselect
   register: result_authselect_present
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -3521,6 +3525,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -3575,6 +3580,7 @@
     - result_authselect_enable_feature_cmd is not skipped
     - result_authselect_enable_feature_cmd is success
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -3587,6 +3593,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -3644,6 +3651,7 @@
     when:
     - result_pam_faillock_is_enabled.found == 0
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -3656,6 +3664,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -3674,6 +3683,7 @@
     path: /etc/security/faillock.conf
   register: result_faillock_conf_check
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -3685,6 +3695,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -3705,6 +3716,7 @@
     line: unlock_time = {{ var_accounts_passwords_pam_faillock_unlock_time }}
     state: present
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -3717,6 +3729,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -3999,6 +4012,7 @@
     when:
     - result_pam_file_present.stat.exists
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -4011,6 +4025,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -4088,6 +4103,7 @@
     when:
     - result_pam_faillock_unlock_time_parameter_is_present.found > 0
   when:
+  - DISA_STIG_RHEL_08_020014 | bool
   - DISA_STIG_RHEL_08_020015 | bool
   - accounts_passwords_pam_faillock_unlock_time | bool
   - low_complexity | bool
@@ -4100,6 +4116,7 @@
   tags:
   - CCE-80670-3
   - CJIS-5.5.3
+  - DISA-STIG-RHEL-08-020014
   - DISA-STIG-RHEL-08-020015
   - NIST-800-171-3.1.8
   - NIST-800-53-AC-7(b)
@@ -4893,12 +4910,33 @@
   - medium_severity
   - no_reboot_needed
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82199-1
+  - DISA-STIG-RHEL-08-020070
+  - configure_tmux_lock_after_time
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_020070 | bool
+  - configure_tmux_lock_after_time | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
 - name: Configure tmux to lock session after inactivity
   block:
   - name: Check for duplicate values
     lineinfile:
       path: /etc/tmux.conf
-      create: false
+      create: true
       regexp: ^\s*set -g lock-after-time\s+
       mode: '0644'
       state: absent
@@ -4908,7 +4946,7 @@
   - name: Deduplicate values from /etc/tmux.conf
     lineinfile:
       path: /etc/tmux.conf
-      create: false
+      create: true
       regexp: ^\s*set -g lock-after-time\s+
       mode: '0644'
       state: absent
@@ -4930,6 +4968,7 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"tmux" in ansible_facts.packages'
   tags:
   - CCE-82199-1
   - DISA-STIG-RHEL-08-020070
@@ -4940,12 +4979,36 @@
   - no_reboot_needed
   - restrict_strategy
 
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80940-0
+  - DISA-STIG-RHEL-08-020040
+  - NIST-800-53-AC-11(a)
+  - NIST-800-53-AC-11(b)
+  - NIST-800-53-CM-6(a)
+  - configure_tmux_lock_command
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_020040 | bool
+  - configure_tmux_lock_command | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
 - name: Configure the tmux Lock Command
   block:
   - name: Check for duplicate values
     lineinfile:
       path: /etc/tmux.conf
-      create: false
+      create: true
       regexp: ^\s*set -g lock-command\s+
       mode: '0644'
       state: absent
@@ -4955,7 +5018,7 @@
   - name: Deduplicate values from /etc/tmux.conf
     lineinfile:
       path: /etc/tmux.conf
-      create: false
+      create: true
       regexp: ^\s*set -g lock-command\s+
       mode: '0644'
       state: absent
@@ -4977,6 +5040,7 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"tmux" in ansible_facts.packages'
   tags:
   - CCE-80940-0
   - DISA-STIG-RHEL-08-020040
@@ -4996,6 +5060,7 @@
   register: result_authselect_present
   when:
   - DISA_STIG_RHEL_08_020331 | bool
+  - DISA_STIG_RHEL_08_020332 | bool
   - configure_strategy | bool
   - high_severity | bool
   - low_complexity | bool
@@ -5007,6 +5072,7 @@
   - CCE-80841-0
   - CJIS-5.5.2
   - DISA-STIG-RHEL-08-020331
+  - DISA-STIG-RHEL-08-020332
   - NIST-800-171-3.1.1
   - NIST-800-171-3.1.5
   - NIST-800-53-CM-6(a)
@@ -5064,6 +5130,7 @@
     - result_authselect_enable_feature_cmd is success
   when:
   - DISA_STIG_RHEL_08_020331 | bool
+  - DISA_STIG_RHEL_08_020332 | bool
   - configure_strategy | bool
   - high_severity | bool
   - low_complexity | bool
@@ -5076,6 +5143,7 @@
   - CCE-80841-0
   - CJIS-5.5.2
   - DISA-STIG-RHEL-08-020331
+  - DISA-STIG-RHEL-08-020332
   - NIST-800-171-3.1.1
   - NIST-800-171-3.1.5
   - NIST-800-53-CM-6(a)
@@ -5100,6 +5168,7 @@
   - /etc/pam.d/password-auth
   when:
   - DISA_STIG_RHEL_08_020331 | bool
+  - DISA_STIG_RHEL_08_020332 | bool
   - configure_strategy | bool
   - high_severity | bool
   - low_complexity | bool
@@ -5112,6 +5181,7 @@
   - CCE-80841-0
   - CJIS-5.5.2
   - DISA-STIG-RHEL-08-020331
+  - DISA-STIG-RHEL-08-020332
   - NIST-800-171-3.1.1
   - NIST-800-171-3.1.5
   - NIST-800-53-CM-6(a)
@@ -5308,14 +5378,9 @@
   - no_reboot_needed
   - restrict_strategy
 
-- name: Check if umask in /etc/bashrc is already set
-  ansible.builtin.lineinfile:
-    path: /etc/bashrc
-    regexp: ^(\s*)umask\s+.*
-    state: absent
-  check_mode: true
-  changed_when: false
-  register: umask_replace
+- name: Gather the package facts
+  package_facts:
+    manager: auto
   tags:
   - CCE-81036-6
   - DISA-STIG-RHEL-08-020353
@@ -5337,6 +5402,36 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
 
+- name: Check if umask in /etc/bashrc is already set
+  ansible.builtin.lineinfile:
+    path: /etc/bashrc
+    regexp: ^(\s*)umask\s+.*
+    state: absent
+  check_mode: true
+  changed_when: false
+  register: umask_replace
+  when:
+  - DISA_STIG_RHEL_08_020353 | bool
+  - accounts_umask_etc_bashrc | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"bash" in ansible_facts.packages'
+  tags:
+  - CCE-81036-6
+  - DISA-STIG-RHEL-08-020353
+  - NIST-800-53-AC-6(1)
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-8.6.1
+  - accounts_umask_etc_bashrc
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
 - name: Replace user umask in /etc/bashrc
   ansible.builtin.replace:
     path: /etc/bashrc
@@ -5350,6 +5445,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
+  - '"bash" in ansible_facts.packages'
   - umask_replace.found > 0
   tags:
   - CCE-81036-6
@@ -5377,6 +5473,7 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
+  - '"bash" in ansible_facts.packages'
   - umask_replace.found == 0
   tags:
   - CCE-81036-6
@@ -5884,7 +5981,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*freq\s*=\s*
       state: absent
     check_mode: true
@@ -5893,7 +5990,7 @@
   - name: Deduplicate values from /etc/audit/auditd.conf
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*freq\s*=\s*
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -5950,7 +6047,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*local_events\s*=\s*
       state: absent
     check_mode: true
@@ -5959,7 +6056,7 @@
   - name: Deduplicate values from /etc/audit/auditd.conf
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*local_events\s*=\s*
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -6019,7 +6116,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*log_format\s*=\s*
       state: absent
     check_mode: true
@@ -6028,7 +6125,7 @@
   - name: Deduplicate values from /etc/audit/auditd.conf
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*log_format\s*=\s*
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -6084,12 +6181,36 @@
   - no_reboot_needed | bool
   - restrict_strategy | bool
 
-- name: Set hostname as computer node name in audit logs
+- name: Set type of computer node name logging in audit logs - Define Value to Be Used in the Remediation
+  ansible.builtin.set_fact: auditd_name_format_split="{{ var_auditd_name_format.split('|')[0] }}"
+  when:
+  - DISA_STIG_RHEL_08_030062 | bool
+  - auditd_name_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82897-0
+  - DISA-STIG-RHEL-08-030062
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
+  - auditd_name_format
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Set type of computer node name logging in audit logs
   block:
   - name: Check for duplicate values
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*name_format\s*=\s*
       state: absent
     check_mode: true
@@ -6098,7 +6219,7 @@
   - name: Deduplicate values from /etc/audit/auditd.conf
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*name_format\s*=\s*
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -6107,7 +6228,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)^\s*name_format\s*=\s*
-      line: name_format = hostname
+      line: name_format = {{ auditd_name_format_split }}
       state: present
   when:
   - DISA_STIG_RHEL_08_030062 | bool
@@ -6156,7 +6277,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*write_logs\s*=\s*
       state: absent
     check_mode: true
@@ -6165,7 +6286,7 @@
   - name: Deduplicate values from /etc/audit/auditd.conf
     lineinfile:
       path: /etc/audit/auditd.conf
-      create: false
+      create: true
       regexp: (?i)^\s*write_logs\s*=\s*
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -14910,7 +15031,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUXTYPE=
       state: absent
     check_mode: true
@@ -14919,7 +15040,7 @@
   - name: Deduplicate values from /etc/selinux/config
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUXTYPE=
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -14960,7 +15081,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUX=
       state: absent
     check_mode: true
@@ -14969,7 +15090,7 @@
   - name: Deduplicate values from /etc/selinux/config
     lineinfile:
       path: /etc/selinux/config
-      create: false
+      create: true
       regexp: ^SELINUX=
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15301,7 +15422,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/chrony.conf
-      create: false
+      create: true
       regexp: ^\s*port\s+
       state: absent
     check_mode: true
@@ -15310,7 +15431,7 @@
   - name: Deduplicate values from /etc/chrony.conf
     lineinfile:
       path: /etc/chrony.conf
-      create: false
+      create: true
       regexp: ^\s*port\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15347,7 +15468,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/chrony.conf
-      create: false
+      create: true
       regexp: ^\s*cmdport\s+
       state: absent
     check_mode: true
@@ -15356,7 +15477,7 @@
   - name: Deduplicate values from /etc/chrony.conf
     lineinfile:
       path: /etc/chrony.conf
-      create: false
+      create: true
       regexp: ^\s*cmdport\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15622,7 +15743,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveCountMax\s+
       state: absent
     check_mode: true
@@ -15631,7 +15752,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveCountMax\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15642,7 +15763,7 @@
       regexp: (?i)^\s*ClientAliveCountMax\s+
       line: ClientAliveCountMax 0
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - low_complexity | bool
@@ -15675,7 +15796,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveInterval\s+
       state: absent
     check_mode: true
@@ -15684,7 +15805,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*ClientAliveInterval\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15695,7 +15816,7 @@
       regexp: (?i)^\s*ClientAliveInterval\s+
       line: ClientAliveInterval {{ sshd_idle_timeout_value }}
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_010201 | bool
@@ -15733,7 +15854,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*HostbasedAuthentication\s+
       state: absent
     check_mode: true
@@ -15742,7 +15863,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*HostbasedAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15753,7 +15874,7 @@
       regexp: (?i)^\s*HostbasedAuthentication\s+
       line: HostbasedAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - disable_host_auth | bool
@@ -15785,7 +15906,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitEmptyPasswords\s+
       state: absent
     check_mode: true
@@ -15794,7 +15915,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitEmptyPasswords\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15805,7 +15926,7 @@
       regexp: (?i)^\s*PermitEmptyPasswords\s+
       line: PermitEmptyPasswords no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_020330 | bool
@@ -15840,7 +15961,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*GSSAPIAuthentication\s+
       state: absent
     check_mode: true
@@ -15849,7 +15970,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*GSSAPIAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15860,7 +15981,7 @@
       regexp: (?i)^\s*GSSAPIAuthentication\s+
       line: GSSAPIAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_010522 | bool
@@ -15891,7 +16012,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*KerberosAuthentication\s+
       state: absent
     check_mode: true
@@ -15900,7 +16021,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*KerberosAuthentication\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15911,7 +16032,7 @@
       regexp: (?i)^\s*KerberosAuthentication\s+
       line: KerberosAuthentication no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_010521 | bool
@@ -15942,7 +16063,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitRootLogin\s+
       state: absent
     check_mode: true
@@ -15951,7 +16072,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*PermitRootLogin\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -15962,7 +16083,7 @@
       regexp: (?i)^\s*PermitRootLogin\s+
       line: PermitRootLogin no
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_010550 | bool
@@ -16000,7 +16121,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*StrictModes\s+
       state: absent
     check_mode: true
@@ -16009,7 +16130,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*StrictModes\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -16020,7 +16141,7 @@
       regexp: (?i)^\s*StrictModes\s+
       line: StrictModes yes
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_010500 | bool
@@ -16050,7 +16171,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*Banner\s+
       state: absent
     check_mode: true
@@ -16059,7 +16180,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*Banner\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -16070,7 +16191,7 @@
       regexp: (?i)^\s*Banner\s+
       line: Banner /etc/issue
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_010040 | bool
@@ -16104,7 +16225,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*RekeyLimit\s+
       state: absent
     check_mode: true
@@ -16113,7 +16234,7 @@
   - name: Deduplicate values from /etc/ssh/sshd_config
     lineinfile:
       path: /etc/ssh/sshd_config
-      create: false
+      create: true
       regexp: (?i)^\s*RekeyLimit\s+
       state: absent
     when: dupes.found is defined and dupes.found > 1
@@ -16124,7 +16245,7 @@
       regexp: (?i)^\s*RekeyLimit\s+
       line: RekeyLimit {{ var_rekey_limit_size }} {{ var_rekey_limit_time }}
       state: present
-      insertbefore: ^[#\s]*Match
+      insertbefore: BOF
       validate: /usr/sbin/sshd -t -f %s
   when:
   - DISA_STIG_RHEL_08_040161 | bool
@@ -16150,7 +16271,7 @@
   - name: Check for duplicate values
     lineinfile:
       path: /etc/sysconfig/sshd
-      create: false
+      create: true
       regexp: ^\s*SSH_USE_STRONG_RNG=
       state: absent
     check_mode: true
@@ -16159,7 +16280,7 @@
   - name: Deduplicate values from /etc/sysconfig/sshd
     lineinfile:
       path: /etc/sysconfig/sshd
-      create: false
+      create: true
       regexp: ^\s*SSH_USE_STRONG_RNG=
       state: absent
     when: dupes.found is defined and dupes.found > 1
