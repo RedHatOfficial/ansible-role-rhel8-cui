@@ -17,6 +17,7 @@ var_password_pam_ucredit: '-1'
 var_accounts_max_concurrent_login_sessions: '10'
 var_accounts_user_umask: '027'
 var_auditd_flush: incremental_async
+var_auditd_name_format: hostname
 sysctl_net_ipv6_conf_all_accept_ra_value: '0'
 sysctl_net_ipv6_conf_all_accept_redirects_value: '0'
 sysctl_net_ipv6_conf_all_accept_source_route_value: '0'
@@ -85,6 +86,7 @@ DISA_STIG_RHEL_08_010675: true
 DISA_STIG_RHEL_08_020011: true
 DISA_STIG_RHEL_08_020012: true
 DISA_STIG_RHEL_08_020013: true
+DISA_STIG_RHEL_08_020014: true
 DISA_STIG_RHEL_08_020015: true
 DISA_STIG_RHEL_08_020024: true
 DISA_STIG_RHEL_08_020039: true
@@ -100,6 +102,7 @@ DISA_STIG_RHEL_08_020230: true
 DISA_STIG_RHEL_08_020280: true
 DISA_STIG_RHEL_08_020330: true
 DISA_STIG_RHEL_08_020331: true
+DISA_STIG_RHEL_08_020332: true
 DISA_STIG_RHEL_08_020353: true
 DISA_STIG_RHEL_08_030061: true
 DISA_STIG_RHEL_08_030062: true
