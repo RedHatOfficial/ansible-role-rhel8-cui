@@ -91,6 +91,7 @@ DISA_STIG_RHEL_08_020015: true
 DISA_STIG_RHEL_08_020024: true
 DISA_STIG_RHEL_08_020039: true
 DISA_STIG_RHEL_08_020040: true
+DISA_STIG_RHEL_08_020042: true
 DISA_STIG_RHEL_08_020070: true
 DISA_STIG_RHEL_08_020110: true
 DISA_STIG_RHEL_08_020120: true
@@ -111,6 +112,7 @@ DISA_STIG_RHEL_08_030180: true
 DISA_STIG_RHEL_08_030181: true
 DISA_STIG_RHEL_08_030601: true
 DISA_STIG_RHEL_08_030602: true
+DISA_STIG_RHEL_08_030603: true
 DISA_STIG_RHEL_08_030670: true
 DISA_STIG_RHEL_08_030741: true
 DISA_STIG_RHEL_08_030742: true
@@ -220,6 +222,7 @@ configure_ssh_crypto_policy: true
 configure_strategy: true
 configure_tmux_lock_after_time: true
 configure_tmux_lock_command: true
+configure_usbguard_auditbackend: true
 coredump_disable_backtraces: true
 coredump_disable_storage: true
 disable_ctrlaltdel_burstaction: true
@@ -281,6 +284,7 @@ mount_option_var_tmp_noexec: true
 mount_option_var_tmp_nosuid: true
 no_empty_passwords: true
 no_reboot_needed: true
+no_tmux_in_shells: true
 openssl_use_strong_entropy: true
 package_abrt_addon_ccpp_removed: true
 package_abrt_addon_kerneloops_removed: true
