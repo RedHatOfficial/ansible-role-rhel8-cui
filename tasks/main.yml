@@ -118,7 +118,7 @@
 - name: Enable FIPS Mode - Check to See the Current Status of FIPS Mode
   ansible.builtin.command: /usr/bin/fips-mode-setup --check
   register: is_fips_enabled
-  ignore_errors: true
+  failed_when: false
   changed_when: false
   when:
   - DISA_STIG_RHEL_08_010020 | bool
@@ -1176,7 +1176,7 @@
     value: '1'
     no_extra_spaces: true
   loop: '{{ repo_grep_results.stdout |regex_findall( ''(.+\.repo):\[(.+)\]\n?'' ) if repo_grep_results is not skipped else
-    []}}'
+    [] }}'
   when:
   - DISA_STIG_RHEL_08_010370 | bool
   - enable_strategy | bool
@@ -1410,6 +1410,7 @@
   tags:
   - CCE-88248-0
   - NIST-800-53-AC-3
+  - PCI-DSSv4-8.3.4
   - configure_strategy
   - enable_authselect
   - low_complexity
@@ -1440,6 +1441,7 @@
   tags:
   - CCE-88248-0
   - NIST-800-53-AC-3
+  - PCI-DSSv4-8.3.4
   - configure_strategy
   - enable_authselect
   - low_complexity
@@ -1456,6 +1458,7 @@
   tags:
   - CCE-88248-0
   - NIST-800-53-AC-3
+  - PCI-DSSv4-8.3.4
   - configure_strategy
   - enable_authselect
   - low_complexity
@@ -1485,6 +1488,7 @@
   tags:
   - CCE-88248-0
   - NIST-800-53-AC-3
+  - PCI-DSSv4-8.3.4
   - configure_strategy
   - enable_authselect
   - low_complexity
@@ -4585,19 +4589,12 @@
   - no_reboot_needed
   - restrict_strategy
 
-- name: Block Disable service debug-shell
-  block:
-  - name: Disable service debug-shell
-    block:
-    - name: Disable service debug-shell
-      systemd:
-        name: debug-shell.service
-        enabled: 'no'
-        state: stopped
-        masked: 'yes'
-    rescue:
-    - name: Intentionally ignored previous 'Disable service debug-shell' failure, service was already disabled
-      meta: noop
+- name: Disable debug-shell SystemD Service - Collect systemd Services Present in the System
+  ansible.builtin.command: systemctl -q list-unit-files --type service
+  register: service_exists
+  changed_when: false
+  failed_when: service_exists.rc not in [0, 1]
+  check_mode: false
   when:
   - DISA_STIG_RHEL_08_040180 | bool
   - disable_strategy | bool
@@ -4619,8 +4616,36 @@
   - no_reboot_needed
   - service_debug-shell_disabled
 
+- name: Disable debug-shell SystemD Service - Ensure "debug-shell.service" is Masked
+  ansible.builtin.systemd:
+    name: debug-shell.service
+    state: stopped
+    enabled: false
+    masked: true
+  when:
+  - DISA_STIG_RHEL_08_040180 | bool
+  - disable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_debug_shell_disabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - service_exists.stdout_lines is search("debug-shell.service",multiline=True)
+  tags:
+  - CCE-80876-6
+  - DISA-STIG-RHEL-08-040180
+  - NIST-800-171-3.4.5
+  - NIST-800-53-CM-6
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_debug-shell_disabled
+
 - name: Unit Socket Exists - debug-shell.socket
-  command: systemctl -q list-unit-files debug-shell.socket
+  ansible.builtin.command: systemctl -q list-unit-files debug-shell.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -4647,7 +4672,7 @@
   - service_debug-shell_disabled
 
 - name: Disable socket debug-shell
-  systemd:
+  ansible.builtin.systemd:
     name: debug-shell.socket
     enabled: 'no'
     state: stopped
@@ -4836,7 +4861,7 @@
   ansible.builtin.find:
     paths: /etc
     patterns: bashrc
-    contains: .*case "$name" in sshd|login\) tmux ;; esac.*
+    contains: .*case "$name" in sshd|login\) exec tmux ;; esac.*
   register: tmux_in_bashrc
   when:
   - configure_bashrc_exec_tmux | bool
@@ -4860,7 +4885,7 @@
   ansible.builtin.find:
     paths: /etc/profile.d
     patterns: '*.sh'
-    contains: .*case "$name" in sshd|login\) tmux ;; esac.*
+    contains: .*case "$name" in sshd|login\) exec tmux ;; esac.*
   register: tmux_in_profile_d
   when:
   - configure_bashrc_exec_tmux | bool
@@ -4884,7 +4909,7 @@
   ansible.builtin.blockinfile:
     path: /etc/profile.d/tmux.sh
     block: "if [ \"$PS1\" ]; then\n  parent=$(ps -o ppid= -p $$)\n  name=$(ps -o comm= -p $parent)\n  case \"$name\" in sshd|login)\
-      \ tmux ;; esac\nfi\n"
+      \ exec tmux ;; esac\nfi\n"
     create: true
   when:
   - configure_bashrc_exec_tmux | bool
@@ -5193,7 +5218,7 @@
 - name: Restrict Virtual Console Root Logins
   lineinfile:
     dest: /etc/securetty
-    regexp: ^vc
+    regexp: ^vc/[0-9]
     state: absent
   tags:
   - CCE-80864-2
@@ -5395,7 +5420,7 @@
 - name: Check if umask in /etc/bashrc is already set
   ansible.builtin.lineinfile:
     path: /etc/bashrc
-    regexp: ^(\s*)umask\s+.*
+    regexp: ^[^#]*\bumask\s+\d+$
     state: absent
   check_mode: true
   changed_when: false
@@ -5424,8 +5449,8 @@
 - name: Replace user umask in /etc/bashrc
   ansible.builtin.replace:
     path: /etc/bashrc
-    regexp: ^(\s*)umask(\s+).*
-    replace: \g<1>umask\g<2>{{ var_accounts_user_umask }}
+    regexp: ^([^#]*\b)umask\s+\d+$
+    replace: \g<1>umask {{ var_accounts_user_umask }}
   when:
   - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_bashrc | bool
@@ -5666,1721 +5691,6 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - restrict_strategy | bool
-
-- name: Ensure audit is installed
-  package:
-    name: audit
-    state: present
-  when:
-  - DISA_STIG_RHEL_08_030180 | bool
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - package_audit_installed | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-81043-2
-  - DISA-STIG-RHEL-08-030180
-  - NIST-800-53-AC-7(a)
-  - NIST-800-53-AU-12(2)
-  - NIST-800-53-AU-14
-  - NIST-800-53-AU-2(a)
-  - NIST-800-53-AU-7(1)
-  - NIST-800-53-AU-7(2)
-  - NIST-800-53-CM-6(a)
-  - PCI-DSS-Req-10.1
-  - PCI-DSSv4-10.2.1
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - package_audit_installed
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-80872-5
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-08-030181
-  - NIST-800-171-3.3.1
-  - NIST-800-171-3.3.2
-  - NIST-800-171-3.3.6
-  - NIST-800-53-AC-2(g)
-  - NIST-800-53-AC-6(9)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-12(c)
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-AU-2(d)
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-SI-4(23)
-  - PCI-DSS-Req-10.1
-  - PCI-DSSv4-10.2.1
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - service_auditd_enabled
-  when:
-  - DISA_STIG_RHEL_08_030181 | bool
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - service_auditd_enabled | bool
-
-- name: Enable service auditd
-  block:
-  - name: Gather the package facts
-    package_facts:
-      manager: auto
-  - name: Enable service auditd
-    systemd:
-      name: auditd
-      enabled: 'yes'
-      state: started
-      masked: 'no'
-    when:
-    - '"audit" in ansible_facts.packages'
-  when:
-  - DISA_STIG_RHEL_08_030181 | bool
-  - enable_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - service_auditd_enabled | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"audit" in ansible_facts.packages'
-  tags:
-  - CCE-80872-5
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-08-030181
-  - NIST-800-171-3.3.1
-  - NIST-800-171-3.3.2
-  - NIST-800-171-3.3.6
-  - NIST-800-53-AC-2(g)
-  - NIST-800-53-AC-6(9)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-12(c)
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-AU-2(d)
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-SI-4(23)
-  - PCI-DSS-Req-10.1
-  - PCI-DSSv4-10.2.1
-  - enable_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - service_auditd_enabled
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-80825-3
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-08-030601
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-  when:
-  - DISA_STIG_RHEL_08_030601 | bool
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-
-- name: Update grub defaults and the bootloader menu
-  command: /sbin/grubby --update-kernel=ALL --args="audit=1"
-  when:
-  - DISA_STIG_RHEL_08_030601 | bool
-  - grub2_audit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-80825-3
-  - CJIS-5.4.1.1
-  - DISA-STIG-RHEL-08-030601
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AC-17(1)
-  - NIST-800-53-AU-10
-  - NIST-800-53-AU-14(1)
-  - NIST-800-53-CM-6(a)
-  - NIST-800-53-IR-5(1)
-  - PCI-DSS-Req-10.3
-  - PCI-DSSv4-10.7.3
-  - grub2_audit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-80943-4
-  - DISA-STIG-RHEL-08-030602
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-  when:
-  - DISA_STIG_RHEL_08_030602 | bool
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-
-- name: Update grub defaults and the bootloader menu
-  command: /sbin/grubby --update-kernel=ALL --args="audit_backlog_limit=8192"
-  when:
-  - DISA_STIG_RHEL_08_030602 | bool
-  - grub2_audit_backlog_limit_argument | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - medium_complexity | bool
-  - reboot_required | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - '"grub2-common" in ansible_facts.packages'
-  tags:
-  - CCE-80943-4
-  - DISA-STIG-RHEL-08-030602
-  - NIST-800-53-CM-6(a)
-  - PCI-DSSv4-10.7.2
-  - grub2_audit_backlog_limit_argument
-  - low_disruption
-  - low_severity
-  - medium_complexity
-  - reboot_required
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-80680-2
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AU-11
-  - NIST-800-53-CM-6(a)
-  - auditd_data_retention_flush
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - auditd_data_retention_flush | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Configure auditd Flush Priority
-  lineinfile:
-    dest: /etc/audit/auditd.conf
-    regexp: ^\s*flush\s*=\s*.*$
-    line: flush = {{ var_auditd_flush }}
-    state: present
-    create: true
-  when:
-  - auditd_data_retention_flush | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-80680-2
-  - NIST-800-171-3.3.1
-  - NIST-800-53-AU-11
-  - NIST-800-53-CM-6(a)
-  - auditd_data_retention_flush
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-82258-5
-  - NIST-800-53-CM-6
-  - auditd_freq
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - auditd_freq | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Set number of records to cause an explicit flush to audit logs
-  block:
-  - name: Check for duplicate values
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*freq\s*=\s*
-      state: absent
-    check_mode: true
-    changed_when: false
-    register: dupes
-  - name: Deduplicate values from /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*freq\s*=\s*
-      state: absent
-    when: dupes.found is defined and dupes.found > 1
-  - name: Insert correct line to /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*freq\s*=\s*
-      line: freq = 50
-      state: present
-  when:
-  - auditd_freq | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82258-5
-  - NIST-800-53-CM-6
-  - auditd_freq
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-82233-8
-  - DISA-STIG-RHEL-08-030061
-  - NIST-800-53-CM-6
-  - auditd_local_events
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - DISA_STIG_RHEL_08_030061 | bool
-  - auditd_local_events | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Include Local Events in Audit Logs
-  block:
-  - name: Check for duplicate values
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*local_events\s*=\s*
-      state: absent
-    check_mode: true
-    changed_when: false
-    register: dupes
-  - name: Deduplicate values from /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*local_events\s*=\s*
-      state: absent
-    when: dupes.found is defined and dupes.found > 1
-  - name: Insert correct line to /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*local_events\s*=\s*
-      line: local_events = yes
-      state: present
-  when:
-  - DISA_STIG_RHEL_08_030061 | bool
-  - auditd_local_events | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82233-8
-  - DISA-STIG-RHEL-08-030061
-  - NIST-800-53-CM-6
-  - auditd_local_events
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-82201-5
-  - DISA-STIG-RHEL-08-030063
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6
-  - auditd_log_format
-  - low_complexity
-  - low_disruption
-  - low_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - DISA_STIG_RHEL_08_030063 | bool
-  - auditd_log_format | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Resolve information before writing to audit logs
-  block:
-  - name: Check for duplicate values
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*log_format\s*=\s*
-      state: absent
-    check_mode: true
-    changed_when: false
-    register: dupes
-  - name: Deduplicate values from /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*log_format\s*=\s*
-      state: absent
-    when: dupes.found is defined and dupes.found > 1
-  - name: Insert correct line to /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*log_format\s*=\s*
-      line: log_format = ENRICHED
-      state: present
-  when:
-  - DISA_STIG_RHEL_08_030063 | bool
-  - auditd_log_format | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - low_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82201-5
-  - DISA-STIG-RHEL-08-030063
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6
-  - auditd_log_format
-  - low_complexity
-  - low_disruption
-  - low_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-82897-0
-  - DISA-STIG-RHEL-08-030062
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6
-  - auditd_name_format
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - DISA_STIG_RHEL_08_030062 | bool
-  - auditd_name_format | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Set type of computer node name logging in audit logs - Define Value to Be Used in the Remediation
-  ansible.builtin.set_fact: auditd_name_format_split="{{ var_auditd_name_format.split('|')[0] }}"
-  when:
-  - DISA_STIG_RHEL_08_030062 | bool
-  - auditd_name_format | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82897-0
-  - DISA-STIG-RHEL-08-030062
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6
-  - auditd_name_format
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Set type of computer node name logging in audit logs
-  block:
-  - name: Check for duplicate values
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*name_format\s*=\s*
-      state: absent
-    check_mode: true
-    changed_when: false
-    register: dupes
-  - name: Deduplicate values from /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*name_format\s*=\s*
-      state: absent
-    when: dupes.found is defined and dupes.found > 1
-  - name: Insert correct line to /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*name_format\s*=\s*
-      line: name_format = {{ auditd_name_format_split }}
-      state: present
-  when:
-  - DISA_STIG_RHEL_08_030062 | bool
-  - auditd_name_format | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82897-0
-  - DISA-STIG-RHEL-08-030062
-  - NIST-800-53-AU-3
-  - NIST-800-53-CM-6
-  - auditd_name_format
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Gather the package facts
-  package_facts:
-    manager: auto
-  tags:
-  - CCE-82366-6
-  - NIST-800-53-CM-6
-  - auditd_write_logs
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-  when:
-  - auditd_write_logs | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-
-- name: Write Audit Logs to the Disk
-  block:
-  - name: Check for duplicate values
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*write_logs\s*=\s*
-      state: absent
-    check_mode: true
-    changed_when: false
-    register: dupes
-  - name: Deduplicate values from /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*write_logs\s*=\s*
-      state: absent
-    when: dupes.found is defined and dupes.found > 1
-  - name: Insert correct line to /etc/audit/auditd.conf
-    lineinfile:
-      path: /etc/audit/auditd.conf
-      create: true
-      regexp: (?i)^\s*write_logs\s*=\s*
-      line: write_logs = yes
-      state: present
-  when:
-  - auditd_write_logs | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - '"audit" in ansible_facts.packages'
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82366-6
-  - NIST-800-53-CM-6
-  - auditd_write_logs
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules
-    content: '## Unsuccessful file access (any other opens) This has to go last.
-
-      -a always,exit -F arch=b32 -S open,openat,openat2,open_by_handle_at -F exit=-EACCES -F auid>=1000 -F auid!=unset -F
-      key=unsuccessful-access
-
-      -a always,exit -F arch=b64 -S open,openat,openat2,open_by_handle_at -F exit=-EACCES -F auid>=1000 -F auid!=unset -F
-      key=unsuccessful-access
-
-      -a always,exit -F arch=b32 -S open,openat,openat2,open_by_handle_at -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-access
-
-      -a always,exit -F arch=b64 -S open,openat,openat2,open_by_handle_at -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-access
-
-      '
-    force: true
-  when:
-  - audit_access_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82833-5
-  - NIST-800-53-AU-2(a)
-  - audit_access_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules
-    mode: o-rwx
-  when:
-  - audit_access_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82833-5
-  - NIST-800-53-AU-2(a)
-  - audit_access_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-3-access-success.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-3-access-success.rules
-    content: '## Successful file access (any other opens) This has to go last.
-
-      ## These next two are likely to result in a whole lot of events
-
-      -a always,exit -F arch=b32 -S open,openat,openat2,open_by_handle_at -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-access
-
-      -a always,exit -F arch=b64 -S open,openat,openat2,open_by_handle_at -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-access
-
-      '
-    force: true
-  when:
-  - audit_access_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82834-3
-  - NIST-800-53-AU-2(a)
-  - audit_access_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-3-access-success.rules
-    mode: o-rwx
-  when:
-  - audit_access_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82834-3
-  - NIST-800-53-AU-2(a)
-  - audit_access_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/10-base-config.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/10-base-config.rules
-    content: '## First rule - delete all
-
-      -D
-
-
-      ## Increase the buffers to survive stress events.
-
-      ## Make this bigger for busy systems
-
-      -b 8192
-
-
-      ## This determine how long to wait in burst of events
-
-      --backlog_wait_time 60000
-
-
-      ## Set failure mode to syslog
-
-      -f 1
-
-
-      '
-    force: true
-  when:
-  - audit_basic_configuration | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82827-7
-  - NIST-800-53-AU-2(a)
-  - audit_basic_configuration
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/10-base-config.rules
-    mode: o-rwx
-  when:
-  - audit_basic_configuration | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82827-7
-  - NIST-800-53-AU-2(a)
-  - audit_basic_configuration
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules
-    content: '## Unsuccessful file creation (open with O_CREAT)
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b32 -S open -F a1&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b64 -S open -F a1&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b32 -S creat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b64 -S creat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b32 -S open -F a1&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b64 -S open -F a1&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b32 -S creat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      -a always,exit -F arch=b64 -S creat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
-
-      '
-    force: true
-  when:
-  - audit_create_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82374-0
-  - NIST-800-53-AU-2(a)
-  - audit_create_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules
-    mode: o-rwx
-  when:
-  - audit_create_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82374-0
-  - NIST-800-53-AU-2(a)
-  - audit_create_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-1-create-success.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-1-create-success.rules
-    content: '## Successful file creation (open with O_CREAT)
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
-
-      -a always,exit -F arch=b32 -S open -F a1&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
-
-      -a always,exit -F arch=b64 -S open -F a1&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
-
-      -a always,exit -F arch=b32 -S creat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
-
-      -a always,exit -F arch=b64 -S creat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
-
-      '
-    force: true
-  when:
-  - audit_create_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82829-3
-  - NIST-800-53-AU-2(a)
-  - audit_create_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-1-create-success.rules
-    mode: o-rwx
-  when:
-  - audit_create_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82829-3
-  - NIST-800-53-AU-2(a)
-  - audit_create_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules
-    content: '## Unsuccessful file delete
-
-      -a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
-
-      -a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
-
-      -a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
-
-      -a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
-
-      '
-    force: true
-  when:
-  - audit_delete_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82835-0
-  - NIST-800-53-AU-2(a)
-  - audit_delete_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules
-    mode: o-rwx
-  when:
-  - audit_delete_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82835-0
-  - NIST-800-53-AU-2(a)
-  - audit_delete_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules
-    content: '## Successful file delete
-
-      -a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-delete
-
-      -a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-delete
-
-      '
-    force: true
-  when:
-  - audit_delete_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82836-8
-  - NIST-800-53-AU-2(a)
-  - audit_delete_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules
-    mode: o-rwx
-  when:
-  - audit_delete_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82836-8
-  - NIST-800-53-AU-2(a)
-  - audit_delete_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/11-loginuid.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/11-loginuid.rules
-    content: '## Make the loginuid immutable. This prevents tampering with the auid.
-
-      --loginuid-immutable
-
-
-      '
-    force: true
-  when:
-  - audit_immutable_login_uids | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82828-5
-  - NIST-800-53-AU-2(a)
-  - audit_immutable_login_uids
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/11-loginuid.rules
-    mode: o-rwx
-  when:
-  - audit_immutable_login_uids | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82828-5
-  - NIST-800-53-AU-2(a)
-  - audit_immutable_login_uids
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules
-    content: '## Unsuccessful file modifications (open for write or truncate)
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b32 -S open -F a1&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b64 -S open -F a1&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b32 -S truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b64 -S truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b32 -S open -F a1&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b64 -S open -F a1&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b32 -S truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      -a always,exit -F arch=b64 -S truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
-
-      '
-    force: true
-  when:
-  - audit_modify_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82830-1
-  - NIST-800-53-AU-2(a)
-  - audit_modify_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules
-    mode: o-rwx
-  when:
-  - audit_modify_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82830-1
-  - NIST-800-53-AU-2(a)
-  - audit_modify_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules
-    content: '## Successful file modifications (open for write or truncate)
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
-
-      -a always,exit -F arch=b32 -S open -F a1&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
-
-      -a always,exit -F arch=b64 -S open -F a1&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
-
-      -a always,exit -F arch=b32 -S truncate,ftruncate -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
-
-      -a always,exit -F arch=b64 -S truncate,ftruncate -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
-
-      '
-    force: true
-  when:
-  - audit_modify_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82832-7
-  - NIST-800-53-AU-2(a)
-  - audit_modify_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules
-    mode: o-rwx
-  when:
-  - audit_modify_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82832-7
-  - NIST-800-53-AU-2(a)
-  - audit_modify_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/43-module-load.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/43-module-load.rules
-    content: '## These rules watch for kernel module insertion. By monitoring
-
-      ## the syscall, we do not need any watches on programs.
-
-      -a always,exit -F arch=b32 -S init_module,finit_module -F key=module-load
-
-      -a always,exit -F arch=b64 -S init_module,finit_module -F key=module-load
-
-      -a always,exit -F arch=b32 -S delete_module -F key=module-unload
-
-      -a always,exit -F arch=b64 -S delete_module -F key=module-unload
-
-      '
-    force: true
-  when:
-  - audit_module_load | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82838-4
-  - NIST-800-53-AU-2(a)
-  - audit_module_load
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/43-module-load.rules
-    mode: o-rwx
-  when:
-  - audit_module_load | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82838-4
-  - NIST-800-53-AU-2(a)
-  - audit_module_load
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42.rules
-    content: '## The purpose of these rules is to meet the requirements for Operating
-
-      ## System Protection Profile (OSPP)v4.2. These rules depends on having
-
-      ## the following rule files copied to /etc/audit/rules.d:
-
-      ##
-
-      ## 10-base-config.rules, 11-loginuid.rules,
-
-      ## 30-ospp-v42-1-create-failed.rules, 30-ospp-v42-1-create-success.rules,
-
-      ## 30-ospp-v42-2-modify-failed.rules, 30-ospp-v42-2-modify-success.rules,
-
-      ## 30-ospp-v42-3-access-failed.rules, 30-ospp-v42-3-access-success.rules,
-
-      ## 30-ospp-v42-4-delete-failed.rules, 30-ospp-v42-4-delete-success.rules,
-
-      ## 30-ospp-v42-5-perm-change-failed.rules,
-
-      ## 30-ospp-v42-5-perm-change-success.rules,
-
-      ## 30-ospp-v42-6-owner-change-failed.rules,
-
-      ## 30-ospp-v42-6-owner-change-success.rules
-
-      ##
-
-      ## original copies may be found in /usr/share/audit/sample-rules/
-
-
-
-      ## User add delete modify. This is covered by pam. However, someone could
-
-      ## open a file and directly create or modify a user, so we''ll watch passwd and
-
-      ## shadow for writes
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F
-      key=user-modify
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F
-      key=user-modify
-
-      -a always,exit -F arch=b32 -S open -F a1&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
-
-      -a always,exit -F arch=b64 -S open -F a1&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
-
-      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F
-      key=user-modify
-
-      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F
-      key=user-modify
-
-      -a always,exit -F arch=b32 -S open -F a1&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
-
-      -a always,exit -F arch=b64 -S open -F a1&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
-
-
-      ## User enable and disable. This is entirely handled by pam.
-
-
-      ## Group add delete modify. This is covered by pam. However, someone could
-
-      ## open a file and directly create or modify a user, so we''ll watch group and
-
-      ## gshadow for writes
-
-      -a always,exit -F path=/etc/passwd -F perm=wa -F auid>=1000 -F auid!=unset -F key=user-modify
-
-      -a always,exit -F path=/etc/shadow -F perm=wa -F auid>=1000 -F auid!=unset -F key=user-modify
-
-      -a always,exit -F path=/etc/group -F perm=wa -F auid>=1000 -F auid!=unset -F key=group-modify
-
-      -a always,exit -F path=/etc/gshadow -F perm=wa -F auid>=1000 -F auid!=unset -F key=group-modify
-
-
-
-      ## Use of special rights for config changes. This would be use of setuid
-
-      ## programs that relate to user accts. This is not all setuid apps because
-
-      ## requirements are only for ones that affect system configuration.
-
-      -a always,exit -F path=/usr/sbin/unix_chkpwd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/sbin/usernetctl -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/sbin/userhelper -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/sbin/seunshare -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/mount -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/newgrp -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/newuidmap -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/gpasswd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/newgidmap -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/umount -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/passwd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/crontab -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/bin/at -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-      -a always,exit -F path=/usr/sbin/grub2-set-bootflag -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
-
-
-      ## Privilege escalation via su or sudo. This is entirely handled by pam.
-
-      ## Special case for systemd-run. It is not audit aware, specifically watch it
-
-      -a always,exit -F path=/usr/bin/systemd-run -F perm=x -F auid!=unset -F key=maybe-escalation
-
-      ## Special case for pkexec. It is not audit aware, specifically watch it
-
-      -a always,exit -F path=/usr/bin/pkexec -F perm=x -F key=maybe-escalation
-
-
-
-      ## Watch for configuration changes to privilege escalation.
-
-      -a always,exit -F path=/etc/sudoers -F perm=wa -F key=special-config-changes
-
-      -a always,exit -F dir=/etc/sudoers.d/ -F perm=wa -F key=special-config-changes
-
-
-      ## Audit log access
-
-      -a always,exit -F dir=/var/log/audit/ -F perm=r -F auid>=1000 -F auid!=unset -F key=access-audit-trail
-
-      ## Attempts to Alter Process and Session Initiation Information
-
-      -a always,exit -F path=/var/run/utmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
-
-      -a always,exit -F path=/var/log/btmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
-
-      -a always,exit -F path=/var/log/wtmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
-
-
-      ## Attempts to modify MAC controls
-
-      -a always,exit -F dir=/etc/selinux/ -F perm=wa -F auid>=1000 -F auid!=unset -F key=MAC-policy
-
-
-      ## Software updates. This is entirely handled by rpm.
-
-
-      ## System start and shutdown. This is entirely handled by systemd
-
-
-      ## Kernel Module loading. This is handled in 43-module-load.rules
-
-
-      ## Application invocation. The requirements list an optional requirement
-
-      ## FPT_SRP_EXT.1 Software Restriction Policies. This event is intended to
-
-      ## state results from that policy. This would be handled entirely by
-
-      ## that daemon.
-
-
-      '
-    force: true
-  when:
-  - audit_ospp_general | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82373-2
-  - NIST-800-53-AU-2(a)
-  - audit_ospp_general
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42.rules
-    mode: o-rwx
-  when:
-  - audit_ospp_general | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82373-2
-  - NIST-800-53-AU-2(a)
-  - audit_ospp_general
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules
-    content: '## Unsuccessful ownership change
-
-      -a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
-
-      -a always,exit -F arch=b64 -S lchown,fchown,chown,fchownat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
-
-      -a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
-
-      -a always,exit -F arch=b64 -S lchown,fchown,chown,fchownat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
-
-      '
-    force: true
-  when:
-  - audit_owner_change_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82384-9
-  - NIST-800-53-AU-2(a)
-  - audit_owner_change_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules
-    mode: o-rwx
-  when:
-  - audit_owner_change_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82384-9
-  - NIST-800-53-AU-2(a)
-  - audit_owner_change_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules
-    content: '## Successful ownership change
-
-      -a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-owner-change
-
-      -a always,exit -F arch=b64 -S lchown,fchown,chown,fchownat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-owner-change
-
-      '
-    force: true
-  when:
-  - audit_owner_change_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82385-6
-  - NIST-800-53-AU-2(a)
-  - audit_owner_change_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules
-    mode: o-rwx
-  when:
-  - audit_owner_change_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82385-6
-  - NIST-800-53-AU-2(a)
-  - audit_owner_change_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules
-    content: '## Unsuccessful permission change
-
-      -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
-      -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
-
-      -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
-      -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
-
-      -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
-      -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
-
-      -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
-      -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
-
-      '
-    force: true
-  when:
-  - audit_perm_change_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82837-6
-  - NIST-800-53-AU-2(a)
-  - audit_perm_change_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules
-    mode: o-rwx
-  when:
-  - audit_perm_change_failed | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82837-6
-  - NIST-800-53-AU-2(a)
-  - audit_perm_change_failed
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Put contents into /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules according to policy
-  copy:
-    dest: /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules
-    content: '## Successful permission change
-
-      -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
-      -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-perm-change
-
-      -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
-      -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-perm-change
-
-      '
-    force: true
-  when:
-  - audit_perm_change_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82383-1
-  - NIST-800-53-AU-2(a)
-  - audit_perm_change_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
-
-- name: Remove any permissions from other group
-  file:
-    path: /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules
-    mode: o-rwx
-  when:
-  - audit_perm_change_success | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - restrict_strategy | bool
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-82383-1
-  - NIST-800-53-AU-2(a)
-  - audit_perm_change_success
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - restrict_strategy
 
 - name: Gather the package facts
   package_facts:
@@ -7686,38 +5996,6 @@
   - reboot_required
   - zipl_audit_backlog_limit_argument
 
-- name: Ensure zIPL bootmap is up to date
-  block:
-  - name: Obtain stats of /boot/bootmap
-    stat:
-      path: /boot/bootmap
-    register: boot_bootmap
-  - name: Obtain stats of /etc/zipl.conf
-    stat:
-      path: /etc/zipl.conf
-    register: zipl_conf
-  - name: Update zIPL bootmap
-    command: /usr/sbin/zipl
-    changed_when: true
-    when: boot_bootmap.stat.mtime is defined and zipl_conf.stat.mtime is defined and  boot_bootmap.stat.mtime < zipl_conf.stat.mtime
-  when:
-  - configure_strategy | bool
-  - low_complexity | bool
-  - low_disruption | bool
-  - medium_severity | bool
-  - no_reboot_needed | bool
-  - zipl_bootmap_is_up_to_date | bool
-  - ansible_architecture == "s390x"
-  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  tags:
-  - CCE-83486-1
-  - configure_strategy
-  - low_complexity
-  - low_disruption
-  - medium_severity
-  - no_reboot_needed
-  - zipl_bootmap_is_up_to_date
-
 - name: Ensure BLS boot entries options contain page_poison=1
   block:
   - name: 'Check how many boot entries exist '
@@ -7832,6 +6110,46 @@
   - reboot_required
   - zipl_slub_debug_argument
 
+- name: Ensure zIPL bootmap is up to date
+  block:
+  - name: Obtain stats of /boot/bootmap
+    stat:
+      path: /boot/bootmap
+    register: boot_bootmap
+  - name: Obtain stats of /etc/zipl.conf
+    stat:
+      path: /etc/zipl.conf
+    register: zipl_conf
+  - name: Obtain stats of /boot/loader/entries
+    stat:
+      path: /boot/loader/entries
+    register: boot_loader_entries
+  - name: Update zIPL bootmap
+    command: /usr/sbin/zipl
+    changed_when: true
+    when:
+    - boot_bootmap.stat.mtime is defined
+    - zipl_conf.stat.mtime is defined
+    - boot_loader_entries.stat.mtime is defined
+    - boot_bootmap.stat.mtime < zipl_conf.stat.mtime or boot_bootmap.stat.mtime < boot_loader_entries.stat.mtime
+  when:
+  - configure_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - zipl_bootmap_is_up_to_date | bool
+  - ansible_architecture == "s390x"
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-83486-1
+  - configure_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - zipl_bootmap_is_up_to_date
+
 - name: Ensure rsyslog is installed
   package:
     name: rsyslog
@@ -7873,6 +6191,7 @@
   - CCE-82998-6
   - DISA-STIG-RHEL-08-040100
   - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-1.2.1
   - enable_strategy
   - low_complexity
   - low_disruption
@@ -11762,6 +10081,34 @@
   - mount_option_home_nosuid
   - no_reboot_needed
 
+- name: 'Add nodev Option to Non-Root Local Partitions: Refresh facts'
+  setup:
+    gather_subset: mounts
+  when:
+  - DISA_STIG_RHEL_08_010580 | bool
+  - configure_strategy | bool
+  - high_disruption | bool
+  - low_complexity | bool
+  - medium_severity | bool
+  - mount_option_nodev_nonroot_local_partitions | bool
+  - no_reboot_needed | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82069-6
+  - DISA-STIG-RHEL-08-010580
+  - NIST-800-53-AC-6
+  - NIST-800-53-AC-6(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-CM-7(a)
+  - NIST-800-53-CM-7(b)
+  - NIST-800-53-MP-7
+  - configure_strategy
+  - high_disruption
+  - low_complexity
+  - medium_severity
+  - mount_option_nodev_nonroot_local_partitions
+  - no_reboot_needed
+
 - name: Ensure non-root local partitions are mounted with nodev option
   mount:
     path: '{{ item.mount }}'
@@ -13944,7 +12291,7 @@
   - CCE-82215-5
   - DISA-STIG-RHEL-08-010671
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -13971,7 +12318,7 @@
   - CCE-82215-5
   - DISA-STIG-RHEL-08-010671
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -13999,7 +12346,7 @@
   - CCE-82215-5
   - DISA-STIG-RHEL-08-010671
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_strategy
   - low_complexity
   - medium_disruption
@@ -14663,7 +13010,7 @@
   - DISA-STIG-RHEL-08-010675
   - NIST-800-53-CM-6
   - PCI-DSS-Req-3.2
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - coredump_disable_backtraces
   - low_complexity
   - low_disruption
@@ -14718,7 +13065,7 @@
   - DISA-STIG-RHEL-08-010675
   - NIST-800-53-CM-6
   - PCI-DSS-Req-3.2
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - coredump_disable_backtraces
   - low_complexity
   - low_disruption
@@ -14734,7 +13081,7 @@
   - DISA-STIG-RHEL-08-010674
   - NIST-800-53-CM-6
   - PCI-DSS-Req-3.2
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - coredump_disable_storage
   - low_complexity
   - low_disruption
@@ -14789,7 +13136,7 @@
   - DISA-STIG-RHEL-08-010674
   - NIST-800-53-CM-6
   - PCI-DSS-Req-3.2
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - coredump_disable_storage
   - low_complexity
   - low_disruption
@@ -14805,7 +13152,7 @@
   - DISA-STIG-RHEL-08-010673
   - NIST-800-53-CM-6
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_users_coredumps
   - low_complexity
   - low_disruption
@@ -14841,7 +13188,7 @@
   - DISA-STIG-RHEL-08-010673
   - NIST-800-53-CM-6
   - NIST-800-53-SC-7(10)
-  - PCI-DSSv4-3.3.1
+  - PCI-DSSv4-3.3.1.1
   - disable_users_coredumps
   - low_complexity
   - low_disruption
@@ -15169,6 +13516,7 @@
   - NIST-800-53-AC-3(3)(a)
   - NIST-800-53-AU-9
   - NIST-800-53-SC-7(21)
+  - PCI-DSSv4-1.2.6
   - high_severity
   - low_complexity
   - low_disruption
@@ -15198,19 +13546,12 @@
   - no_reboot_needed | bool
   - package_abrt_removed | bool
 
-- name: Block Disable service kdump
-  block:
-  - name: Disable service kdump
-    block:
-    - name: Disable service kdump
-      systemd:
-        name: kdump.service
-        enabled: 'no'
-        state: stopped
-        masked: 'yes'
-    rescue:
-    - name: Intentionally ignored previous 'Disable service kdump' failure, service was already disabled
-      meta: noop
+- name: Disable KDump Kernel Crash Analyzer (kdump) - Collect systemd Services Present in the System
+  ansible.builtin.command: systemctl -q list-unit-files --type service
+  register: service_exists
+  changed_when: false
+  failed_when: service_exists.rc not in [0, 1]
+  check_mode: false
   when:
   - DISA_STIG_RHEL_08_010670 | bool
   - disable_strategy | bool
@@ -15233,8 +13574,37 @@
   - no_reboot_needed
   - service_kdump_disabled
 
+- name: Disable KDump Kernel Crash Analyzer (kdump) - Ensure "kdump.service" is Masked
+  ansible.builtin.systemd:
+    name: kdump.service
+    state: stopped
+    enabled: false
+    masked: true
+  when:
+  - DISA_STIG_RHEL_08_010670 | bool
+  - disable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_kdump_disabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - service_exists.stdout_lines is search("kdump.service",multiline=True)
+  tags:
+  - CCE-80878-2
+  - DISA-STIG-RHEL-08-010670
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-CM-7(a)
+  - NIST-800-53-CM-7(b)
+  - disable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_kdump_disabled
+
 - name: Unit Socket Exists - kdump.socket
-  command: systemctl -q list-unit-files kdump.socket
+  ansible.builtin.command: systemctl -q list-unit-files kdump.socket
   register: socket_file_exists
   changed_when: false
   failed_when: socket_file_exists.rc not in [0, 1]
@@ -15262,7 +13632,7 @@
   - service_kdump_disabled
 
 - name: Disable socket kdump
-  systemd:
+  ansible.builtin.systemd:
     name: kdump.socket
     enabled: 'no'
     state: stopped
@@ -15875,7 +14245,6 @@
   - restrict_strategy | bool
   - sshd_set_idle_timeout | bool
   - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
-  - ansible_distribution == 'RedHat' and ansible_distribution_version is version('8.5', '<=')
   tags:
   - CCE-80906-1
   - CJIS-5.5.6
@@ -16445,3 +14814,1721 @@
   - medium_severity
   - no_reboot_needed
   - usbguard_allow_hid_and_hub
+
+- name: Ensure audit is installed
+  package:
+    name: audit
+    state: present
+  when:
+  - DISA_STIG_RHEL_08_030180 | bool
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - package_audit_installed | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-81043-2
+  - DISA-STIG-RHEL-08-030180
+  - NIST-800-53-AC-7(a)
+  - NIST-800-53-AU-12(2)
+  - NIST-800-53-AU-14
+  - NIST-800-53-AU-2(a)
+  - NIST-800-53-AU-7(1)
+  - NIST-800-53-AU-7(2)
+  - NIST-800-53-CM-6(a)
+  - PCI-DSS-Req-10.1
+  - PCI-DSSv4-10.2.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - package_audit_installed
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80872-5
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-08-030181
+  - NIST-800-171-3.3.1
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AC-6(9)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-AU-2(d)
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
+  - PCI-DSS-Req-10.1
+  - PCI-DSSv4-10.2.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_auditd_enabled
+  when:
+  - DISA_STIG_RHEL_08_030181 | bool
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_auditd_enabled | bool
+
+- name: Enable service auditd
+  block:
+  - name: Gather the package facts
+    package_facts:
+      manager: auto
+  - name: Enable service auditd
+    systemd:
+      name: auditd
+      enabled: 'yes'
+      state: started
+      masked: 'no'
+    when:
+    - '"audit" in ansible_facts.packages'
+  when:
+  - DISA_STIG_RHEL_08_030181 | bool
+  - enable_strategy | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - service_auditd_enabled | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"audit" in ansible_facts.packages'
+  tags:
+  - CCE-80872-5
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-08-030181
+  - NIST-800-171-3.3.1
+  - NIST-800-171-3.3.2
+  - NIST-800-171-3.3.6
+  - NIST-800-53-AC-2(g)
+  - NIST-800-53-AC-6(9)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-12(c)
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-AU-2(d)
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-SI-4(23)
+  - PCI-DSS-Req-10.1
+  - PCI-DSSv4-10.2.1
+  - enable_strategy
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - service_auditd_enabled
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80825-3
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-08-030601
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_030601 | bool
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+
+- name: Update grub defaults and the bootloader menu
+  command: /sbin/grubby --update-kernel=ALL --args="audit=1"
+  when:
+  - DISA_STIG_RHEL_08_030601 | bool
+  - grub2_audit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-80825-3
+  - CJIS-5.4.1.1
+  - DISA-STIG-RHEL-08-030601
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AC-17(1)
+  - NIST-800-53-AU-10
+  - NIST-800-53-AU-14(1)
+  - NIST-800-53-CM-6(a)
+  - NIST-800-53-IR-5(1)
+  - PCI-DSS-Req-10.3
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80943-4
+  - DISA-STIG-RHEL-08-030602
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_030602 | bool
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+
+- name: Update grub defaults and the bootloader menu
+  command: /sbin/grubby --update-kernel=ALL --args="audit_backlog_limit=8192"
+  when:
+  - DISA_STIG_RHEL_08_030602 | bool
+  - grub2_audit_backlog_limit_argument | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - medium_complexity | bool
+  - reboot_required | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  - '"grub2-common" in ansible_facts.packages'
+  tags:
+  - CCE-80943-4
+  - DISA-STIG-RHEL-08-030602
+  - NIST-800-53-CM-6(a)
+  - PCI-DSSv4-10.7.2
+  - grub2_audit_backlog_limit_argument
+  - low_disruption
+  - low_severity
+  - medium_complexity
+  - reboot_required
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-80680-2
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AU-11
+  - NIST-800-53-CM-6(a)
+  - auditd_data_retention_flush
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_data_retention_flush | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Configure auditd Flush Priority
+  lineinfile:
+    dest: /etc/audit/auditd.conf
+    regexp: ^\s*flush\s*=\s*.*$
+    line: flush = {{ var_auditd_flush }}
+    state: present
+    create: true
+  when:
+  - auditd_data_retention_flush | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-80680-2
+  - NIST-800-171-3.3.1
+  - NIST-800-53-AU-11
+  - NIST-800-53-CM-6(a)
+  - auditd_data_retention_flush
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82258-5
+  - NIST-800-53-CM-6
+  - auditd_freq
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_freq | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Set number of records to cause an explicit flush to audit logs
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*freq\s*=\s*
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*freq\s*=\s*
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*freq\s*=\s*
+      line: freq = 50
+      state: present
+  when:
+  - auditd_freq | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82258-5
+  - NIST-800-53-CM-6
+  - auditd_freq
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82233-8
+  - DISA-STIG-RHEL-08-030061
+  - NIST-800-53-CM-6
+  - auditd_local_events
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_030061 | bool
+  - auditd_local_events | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Include Local Events in Audit Logs
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*local_events\s*=\s*
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*local_events\s*=\s*
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*local_events\s*=\s*
+      line: local_events = yes
+      state: present
+  when:
+  - DISA_STIG_RHEL_08_030061 | bool
+  - auditd_local_events | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82233-8
+  - DISA-STIG-RHEL-08-030061
+  - NIST-800-53-CM-6
+  - auditd_local_events
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82201-5
+  - DISA-STIG-RHEL-08-030063
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
+  - auditd_log_format
+  - low_complexity
+  - low_disruption
+  - low_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_030063 | bool
+  - auditd_log_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Resolve information before writing to audit logs
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*log_format\s*=\s*
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*log_format\s*=\s*
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*log_format\s*=\s*
+      line: log_format = ENRICHED
+      state: present
+  when:
+  - DISA_STIG_RHEL_08_030063 | bool
+  - auditd_log_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - low_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82201-5
+  - DISA-STIG-RHEL-08-030063
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
+  - auditd_log_format
+  - low_complexity
+  - low_disruption
+  - low_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82897-0
+  - DISA-STIG-RHEL-08-030062
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
+  - PCI-DSSv4-10.2.2
+  - auditd_name_format
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - DISA_STIG_RHEL_08_030062 | bool
+  - auditd_name_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Set type of computer node name logging in audit logs - Define Value to Be Used in the Remediation
+  ansible.builtin.set_fact: auditd_name_format_split="{{ var_auditd_name_format.split('|')[0] }}"
+  when:
+  - DISA_STIG_RHEL_08_030062 | bool
+  - auditd_name_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82897-0
+  - DISA-STIG-RHEL-08-030062
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
+  - PCI-DSSv4-10.2.2
+  - auditd_name_format
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Set type of computer node name logging in audit logs
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*name_format\s*=\s*
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*name_format\s*=\s*
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*name_format\s*=\s*
+      line: name_format = {{ auditd_name_format_split }}
+      state: present
+  when:
+  - DISA_STIG_RHEL_08_030062 | bool
+  - auditd_name_format | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82897-0
+  - DISA-STIG-RHEL-08-030062
+  - NIST-800-53-AU-3
+  - NIST-800-53-CM-6
+  - PCI-DSSv4-10.2.2
+  - auditd_name_format
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Gather the package facts
+  package_facts:
+    manager: auto
+  tags:
+  - CCE-82366-6
+  - NIST-800-53-CM-6
+  - auditd_write_logs
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+  when:
+  - auditd_write_logs | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+
+- name: Write Audit Logs to the Disk
+  block:
+  - name: Check for duplicate values
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*write_logs\s*=\s*
+      state: absent
+    check_mode: true
+    changed_when: false
+    register: dupes
+  - name: Deduplicate values from /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*write_logs\s*=\s*
+      state: absent
+    when: dupes.found is defined and dupes.found > 1
+  - name: Insert correct line to /etc/audit/auditd.conf
+    lineinfile:
+      path: /etc/audit/auditd.conf
+      create: true
+      regexp: (?i)^\s*write_logs\s*=\s*
+      line: write_logs = yes
+      state: present
+  when:
+  - auditd_write_logs | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - '"audit" in ansible_facts.packages'
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82366-6
+  - NIST-800-53-CM-6
+  - auditd_write_logs
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules
+    content: '## Unsuccessful file access (any other opens) This has to go last.
+
+      -a always,exit -F arch=b32 -S open,openat,openat2,open_by_handle_at -F exit=-EACCES -F auid>=1000 -F auid!=unset -F
+      key=unsuccessful-access
+
+      -a always,exit -F arch=b64 -S open,openat,openat2,open_by_handle_at -F exit=-EACCES -F auid>=1000 -F auid!=unset -F
+      key=unsuccessful-access
+
+      -a always,exit -F arch=b32 -S open,openat,openat2,open_by_handle_at -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-access
+
+      -a always,exit -F arch=b64 -S open,openat,openat2,open_by_handle_at -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-access
+
+      '
+    force: true
+  when:
+  - audit_access_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82833-5
+  - NIST-800-53-AU-2(a)
+  - audit_access_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-3-access-failed.rules
+    mode: o-rwx
+  when:
+  - audit_access_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82833-5
+  - NIST-800-53-AU-2(a)
+  - audit_access_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-3-access-success.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-3-access-success.rules
+    content: '## Successful file access (any other opens) This has to go last.
+
+      ## These next two are likely to result in a whole lot of events
+
+      -a always,exit -F arch=b32 -S open,openat,openat2,open_by_handle_at -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-access
+
+      -a always,exit -F arch=b64 -S open,openat,openat2,open_by_handle_at -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-access
+
+      '
+    force: true
+  when:
+  - audit_access_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82834-3
+  - NIST-800-53-AU-2(a)
+  - audit_access_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-3-access-success.rules
+    mode: o-rwx
+  when:
+  - audit_access_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82834-3
+  - NIST-800-53-AU-2(a)
+  - audit_access_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/10-base-config.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/10-base-config.rules
+    content: '## First rule - delete all
+
+      -D
+
+
+      ## Increase the buffers to survive stress events.
+
+      ## Make this bigger for busy systems
+
+      -b 8192
+
+
+      ## This determine how long to wait in burst of events
+
+      --backlog_wait_time 60000
+
+
+      ## Set failure mode to syslog
+
+      -f 1
+
+
+      '
+    force: true
+  when:
+  - audit_basic_configuration | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82827-7
+  - NIST-800-53-AU-2(a)
+  - audit_basic_configuration
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/10-base-config.rules
+    mode: o-rwx
+  when:
+  - audit_basic_configuration | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82827-7
+  - NIST-800-53-AU-2(a)
+  - audit_basic_configuration
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules
+    content: '## Unsuccessful file creation (open with O_CREAT)
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b32 -S open -F a1&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b64 -S open -F a1&0100 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b32 -S creat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b64 -S creat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b32 -S open -F a1&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b64 -S open -F a1&0100 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b32 -S creat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      -a always,exit -F arch=b64 -S creat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-create
+
+      '
+    force: true
+  when:
+  - audit_create_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82374-0
+  - NIST-800-53-AU-2(a)
+  - audit_create_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-1-create-failed.rules
+    mode: o-rwx
+  when:
+  - audit_create_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82374-0
+  - NIST-800-53-AU-2(a)
+  - audit_create_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-1-create-success.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-1-create-success.rules
+    content: '## Successful file creation (open with O_CREAT)
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
+
+      -a always,exit -F arch=b32 -S open -F a1&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
+
+      -a always,exit -F arch=b64 -S open -F a1&0100 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
+
+      -a always,exit -F arch=b32 -S creat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
+
+      -a always,exit -F arch=b64 -S creat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-create
+
+      '
+    force: true
+  when:
+  - audit_create_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82829-3
+  - NIST-800-53-AU-2(a)
+  - audit_create_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-1-create-success.rules
+    mode: o-rwx
+  when:
+  - audit_create_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82829-3
+  - NIST-800-53-AU-2(a)
+  - audit_create_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules
+    content: '## Unsuccessful file delete
+
+      -a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
+
+      -a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
+
+      -a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
+
+      -a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-delete
+
+      '
+    force: true
+  when:
+  - audit_delete_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82835-0
+  - NIST-800-53-AU-2(a)
+  - audit_delete_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-4-delete-failed.rules
+    mode: o-rwx
+  when:
+  - audit_delete_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82835-0
+  - NIST-800-53-AU-2(a)
+  - audit_delete_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules
+    content: '## Successful file delete
+
+      -a always,exit -F arch=b32 -S unlink,unlinkat,rename,renameat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-delete
+
+      -a always,exit -F arch=b64 -S unlink,unlinkat,rename,renameat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-delete
+
+      '
+    force: true
+  when:
+  - audit_delete_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82836-8
+  - NIST-800-53-AU-2(a)
+  - audit_delete_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-4-delete-success.rules
+    mode: o-rwx
+  when:
+  - audit_delete_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82836-8
+  - NIST-800-53-AU-2(a)
+  - audit_delete_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/11-loginuid.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/11-loginuid.rules
+    content: '## Make the loginuid immutable. This prevents tampering with the auid.
+
+      --loginuid-immutable
+
+
+      '
+    force: true
+  when:
+  - audit_immutable_login_uids | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82828-5
+  - NIST-800-53-AU-2(a)
+  - audit_immutable_login_uids
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/11-loginuid.rules
+    mode: o-rwx
+  when:
+  - audit_immutable_login_uids | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82828-5
+  - NIST-800-53-AU-2(a)
+  - audit_immutable_login_uids
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules
+    content: '## Unsuccessful file modifications (open for write or truncate)
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b32 -S open -F a1&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b64 -S open -F a1&01003 -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b32 -S truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b64 -S truncate,ftruncate -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b32 -S open -F a1&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b64 -S open -F a1&01003 -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b32 -S truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      -a always,exit -F arch=b64 -S truncate,ftruncate -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-modification
+
+      '
+    force: true
+  when:
+  - audit_modify_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82830-1
+  - NIST-800-53-AU-2(a)
+  - audit_modify_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-2-modify-failed.rules
+    mode: o-rwx
+  when:
+  - audit_modify_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82830-1
+  - NIST-800-53-AU-2(a)
+  - audit_modify_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules
+    content: '## Successful file modifications (open for write or truncate)
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
+
+      -a always,exit -F arch=b32 -S open -F a1&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
+
+      -a always,exit -F arch=b64 -S open -F a1&01003 -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
+
+      -a always,exit -F arch=b32 -S truncate,ftruncate -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
+
+      -a always,exit -F arch=b64 -S truncate,ftruncate -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-modification
+
+      '
+    force: true
+  when:
+  - audit_modify_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82832-7
+  - NIST-800-53-AU-2(a)
+  - audit_modify_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-2-modify-success.rules
+    mode: o-rwx
+  when:
+  - audit_modify_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82832-7
+  - NIST-800-53-AU-2(a)
+  - audit_modify_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/43-module-load.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/43-module-load.rules
+    content: '## These rules watch for kernel module insertion. By monitoring
+
+      ## the syscall, we do not need any watches on programs.
+
+      -a always,exit -F arch=b32 -S init_module,finit_module -F key=module-load
+
+      -a always,exit -F arch=b64 -S init_module,finit_module -F key=module-load
+
+      -a always,exit -F arch=b32 -S delete_module -F key=module-unload
+
+      -a always,exit -F arch=b64 -S delete_module -F key=module-unload
+
+      '
+    force: true
+  when:
+  - audit_module_load | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82838-4
+  - NIST-800-53-AU-2(a)
+  - audit_module_load
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/43-module-load.rules
+    mode: o-rwx
+  when:
+  - audit_module_load | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82838-4
+  - NIST-800-53-AU-2(a)
+  - audit_module_load
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42.rules
+    content: '## The purpose of these rules is to meet the requirements for Operating
+
+      ## System Protection Profile (OSPP)v4.2. These rules depends on having
+
+      ## the following rule files copied to /etc/audit/rules.d:
+
+      ##
+
+      ## 10-base-config.rules, 11-loginuid.rules,
+
+      ## 30-ospp-v42-1-create-failed.rules, 30-ospp-v42-1-create-success.rules,
+
+      ## 30-ospp-v42-2-modify-failed.rules, 30-ospp-v42-2-modify-success.rules,
+
+      ## 30-ospp-v42-3-access-failed.rules, 30-ospp-v42-3-access-success.rules,
+
+      ## 30-ospp-v42-4-delete-failed.rules, 30-ospp-v42-4-delete-success.rules,
+
+      ## 30-ospp-v42-5-perm-change-failed.rules,
+
+      ## 30-ospp-v42-5-perm-change-success.rules,
+
+      ## 30-ospp-v42-6-owner-change-failed.rules,
+
+      ## 30-ospp-v42-6-owner-change-success.rules
+
+      ##
+
+      ## original copies may be found in /usr/share/audit/sample-rules/
+
+
+
+      ## User add delete modify. This is covered by pam. However, someone could
+
+      ## open a file and directly create or modify a user, so we''ll watch passwd and
+
+      ## shadow for writes
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F
+      key=user-modify
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F
+      key=user-modify
+
+      -a always,exit -F arch=b32 -S open -F a1&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
+
+      -a always,exit -F arch=b64 -S open -F a1&03 -F path=/etc/passwd -F auid>=1000 -F auid!=unset -F key=user-modify
+
+      -a always,exit -F arch=b32 -S openat,open_by_handle_at -F a2&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F
+      key=user-modify
+
+      -a always,exit -F arch=b64 -S openat,open_by_handle_at -F a2&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F
+      key=user-modify
+
+      -a always,exit -F arch=b32 -S open -F a1&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
+
+      -a always,exit -F arch=b64 -S open -F a1&03 -F path=/etc/shadow -F auid>=1000 -F auid!=unset -F key=user-modify
+
+
+      ## User enable and disable. This is entirely handled by pam.
+
+
+      ## Group add delete modify. This is covered by pam. However, someone could
+
+      ## open a file and directly create or modify a user, so we''ll watch group and
+
+      ## gshadow for writes
+
+      -a always,exit -F path=/etc/passwd -F perm=wa -F auid>=1000 -F auid!=unset -F key=user-modify
+
+      -a always,exit -F path=/etc/shadow -F perm=wa -F auid>=1000 -F auid!=unset -F key=user-modify
+
+      -a always,exit -F path=/etc/group -F perm=wa -F auid>=1000 -F auid!=unset -F key=group-modify
+
+      -a always,exit -F path=/etc/gshadow -F perm=wa -F auid>=1000 -F auid!=unset -F key=group-modify
+
+
+
+      ## Use of special rights for config changes. This would be use of setuid
+
+      ## programs that relate to user accts. This is not all setuid apps because
+
+      ## requirements are only for ones that affect system configuration.
+
+      -a always,exit -F path=/usr/sbin/unix_chkpwd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/sbin/usernetctl -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/sbin/userhelper -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/sbin/seunshare -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/mount -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/newgrp -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/newuidmap -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/gpasswd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/newgidmap -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/umount -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/passwd -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/crontab -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/bin/at -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+      -a always,exit -F path=/usr/sbin/grub2-set-bootflag -F perm=x -F auid>=1000 -F auid!=unset -F key=special-config-changes
+
+
+      ## Privilege escalation via su or sudo. This is entirely handled by pam.
+
+      ## Special case for systemd-run. It is not audit aware, specifically watch it
+
+      -a always,exit -F path=/usr/bin/systemd-run -F perm=x -F auid!=unset -F key=maybe-escalation
+
+      ## Special case for pkexec. It is not audit aware, specifically watch it
+
+      -a always,exit -F path=/usr/bin/pkexec -F perm=x -F key=maybe-escalation
+
+
+
+      ## Watch for configuration changes to privilege escalation.
+
+      -a always,exit -F path=/etc/sudoers -F perm=wa -F key=special-config-changes
+
+      -a always,exit -F dir=/etc/sudoers.d/ -F perm=wa -F key=special-config-changes
+
+
+      ## Audit log access
+
+      -a always,exit -F dir=/var/log/audit/ -F perm=r -F auid>=1000 -F auid!=unset -F key=access-audit-trail
+
+      ## Attempts to Alter Process and Session Initiation Information
+
+      -a always,exit -F path=/var/run/utmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
+
+      -a always,exit -F path=/var/log/btmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
+
+      -a always,exit -F path=/var/log/wtmp -F perm=wa -F auid>=1000 -F auid!=unset -F key=session
+
+
+      ## Attempts to modify MAC controls
+
+      -a always,exit -F dir=/etc/selinux/ -F perm=wa -F auid>=1000 -F auid!=unset -F key=MAC-policy
+
+
+      ## Software updates. This is entirely handled by rpm.
+
+
+      ## System start and shutdown. This is entirely handled by systemd
+
+
+      ## Kernel Module loading. This is handled in 43-module-load.rules
+
+
+      ## Application invocation. The requirements list an optional requirement
+
+      ## FPT_SRP_EXT.1 Software Restriction Policies. This event is intended to
+
+      ## state results from that policy. This would be handled entirely by
+
+      ## that daemon.
+
+
+      '
+    force: true
+  when:
+  - audit_ospp_general | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82373-2
+  - NIST-800-53-AU-2(a)
+  - audit_ospp_general
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42.rules
+    mode: o-rwx
+  when:
+  - audit_ospp_general | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82373-2
+  - NIST-800-53-AU-2(a)
+  - audit_ospp_general
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules
+    content: '## Unsuccessful ownership change
+
+      -a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
+
+      -a always,exit -F arch=b64 -S lchown,fchown,chown,fchownat -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
+
+      -a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
+
+      -a always,exit -F arch=b64 -S lchown,fchown,chown,fchownat -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-owner-change
+
+      '
+    force: true
+  when:
+  - audit_owner_change_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82384-9
+  - NIST-800-53-AU-2(a)
+  - audit_owner_change_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-6-owner-change-failed.rules
+    mode: o-rwx
+  when:
+  - audit_owner_change_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82384-9
+  - NIST-800-53-AU-2(a)
+  - audit_owner_change_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules
+    content: '## Successful ownership change
+
+      -a always,exit -F arch=b32 -S lchown,fchown,chown,fchownat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-owner-change
+
+      -a always,exit -F arch=b64 -S lchown,fchown,chown,fchownat -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-owner-change
+
+      '
+    force: true
+  when:
+  - audit_owner_change_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82385-6
+  - NIST-800-53-AU-2(a)
+  - audit_owner_change_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-6-owner-change-success.rules
+    mode: o-rwx
+  when:
+  - audit_owner_change_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82385-6
+  - NIST-800-53-AU-2(a)
+  - audit_owner_change_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules
+    content: '## Unsuccessful permission change
+
+      -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
+      -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+
+      -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
+      -F exit=-EACCES -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+
+      -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
+      -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+
+      -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
+      -F exit=-EPERM -F auid>=1000 -F auid!=unset -F key=unsuccessful-perm-change
+
+      '
+    force: true
+  when:
+  - audit_perm_change_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82837-6
+  - NIST-800-53-AU-2(a)
+  - audit_perm_change_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-5-perm-change-failed.rules
+    mode: o-rwx
+  when:
+  - audit_perm_change_failed | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82837-6
+  - NIST-800-53-AU-2(a)
+  - audit_perm_change_failed
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Put contents into /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules according to policy
+  copy:
+    dest: /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules
+    content: '## Successful permission change
+
+      -a always,exit -F arch=b32 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
+      -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-perm-change
+
+      -a always,exit -F arch=b64 -S chmod,fchmod,fchmodat,setxattr,lsetxattr,fsetxattr,removexattr,lremovexattr,fremovexattr
+      -F success=1 -F auid>=1000 -F auid!=unset -F key=successful-perm-change
+
+      '
+    force: true
+  when:
+  - audit_perm_change_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82383-1
+  - NIST-800-53-AU-2(a)
+  - audit_perm_change_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
+
+- name: Remove any permissions from other group
+  file:
+    path: /etc/audit/rules.d/30-ospp-v42-5-perm-change-success.rules
+    mode: o-rwx
+  when:
+  - audit_perm_change_success | bool
+  - low_complexity | bool
+  - low_disruption | bool
+  - medium_severity | bool
+  - no_reboot_needed | bool
+  - restrict_strategy | bool
+  - ansible_virtualization_type not in ["docker", "lxc", "openvz", "podman", "container"]
+  tags:
+  - CCE-82383-1
+  - NIST-800-53-AU-2(a)
+  - audit_perm_change_success
+  - low_complexity
+  - low_disruption
+  - medium_severity
+  - no_reboot_needed
+  - restrict_strategy
