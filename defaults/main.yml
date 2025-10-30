@@ -1,6 +1,6 @@
 ---
 # defaults file for rhel8_cui
-var_system_crypto_policy: FIPS:OSPP
+var_system_crypto_policy: FIPS
 var_authselect_profile: minimal
 var_password_pam_unix_remember: '5'
 var_accounts_passwords_pam_faillock_deny: '3'
@@ -16,8 +16,6 @@ var_password_pam_ocredit: '-1'
 var_password_pam_ucredit: '-1'
 var_accounts_max_concurrent_login_sessions: '10'
 var_accounts_user_umask: '027'
-var_auditd_flush: incremental_async
-var_auditd_name_format: hostname
 sysctl_net_ipv6_conf_all_accept_ra_value: '0'
 sysctl_net_ipv6_conf_all_accept_redirects_value: '0'
 sysctl_net_ipv6_conf_all_accept_source_route_value: '0'
@@ -46,6 +44,8 @@ var_ssh_client_rekey_limit_time: 1h
 sshd_idle_timeout_value: '840'
 var_rekey_limit_size: 1G
 var_rekey_limit_time: 1h
+var_auditd_flush: incremental_async
+var_auditd_name_format: hostname
 DISA_STIG_RHEL_08_010019: true
 DISA_STIG_RHEL_08_010020: true
 DISA_STIG_RHEL_08_010040: true
