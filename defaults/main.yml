@@ -89,10 +89,6 @@ DISA_STIG_RHEL_08_020013: true
 DISA_STIG_RHEL_08_020014: true
 DISA_STIG_RHEL_08_020015: true
 DISA_STIG_RHEL_08_020024: true
-DISA_STIG_RHEL_08_020039: true
-DISA_STIG_RHEL_08_020040: true
-DISA_STIG_RHEL_08_020042: true
-DISA_STIG_RHEL_08_020070: true
 DISA_STIG_RHEL_08_020110: true
 DISA_STIG_RHEL_08_020120: true
 DISA_STIG_RHEL_08_020130: true
@@ -214,6 +210,7 @@ auditd_write_logs: true
 chronyd_client_only: true
 chronyd_no_chronyc_network: true
 configure_bashrc_exec_tmux: true
+configure_bind_crypto_policy: true
 configure_crypto_policy: true
 configure_kerberos_crypto_policy: true
 configure_libreswan_crypto_policy: true
