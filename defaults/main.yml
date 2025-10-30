@@ -228,8 +228,6 @@ disable_host_auth: true
 disable_strategy: true
 disable_users_coredumps: true
 enable_authselect: true
-enable_dracut_fips_module: true
-enable_fips_mode: true
 enable_strategy: true
 ensure_gpgcheck_globally_activated: true
 ensure_gpgcheck_local_packages: true
