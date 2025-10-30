@@ -45,6 +45,7 @@ sshd_idle_timeout_value: '840'
 var_rekey_limit_size: 1G
 var_rekey_limit_time: 1h
 var_auditd_flush: incremental_async
+var_auditd_freq: '50'
 var_auditd_name_format: hostname
 DISA_STIG_RHEL_08_010019: true
 DISA_STIG_RHEL_08_010020: true
@@ -59,7 +60,6 @@ DISA_STIG_RHEL_08_010287: true
 DISA_STIG_RHEL_08_010292: true
 DISA_STIG_RHEL_08_010293: true
 DISA_STIG_RHEL_08_010359: true
-DISA_STIG_RHEL_08_010370: true
 DISA_STIG_RHEL_08_010371: true
 DISA_STIG_RHEL_08_010372: true
 DISA_STIG_RHEL_08_010373: true
@@ -68,7 +68,6 @@ DISA_STIG_RHEL_08_010375: true
 DISA_STIG_RHEL_08_010376: true
 DISA_STIG_RHEL_08_010421: true
 DISA_STIG_RHEL_08_010422: true
-DISA_STIG_RHEL_08_010423: true
 DISA_STIG_RHEL_08_010450: true
 DISA_STIG_RHEL_08_010500: true
 DISA_STIG_RHEL_08_010521: true
@@ -168,6 +167,7 @@ DISA_STIG_RHEL_08_040285: true
 DISA_STIG_RHEL_08_040286: true
 DISA_STIG_RHEL_08_040370: true
 DISA_STIG_RHEL_08_040380: true
+DISA_STIG_needed_rules: true
 accounts_max_concurrent_login_sessions: true
 accounts_password_pam_dcredit: true
 accounts_password_pam_difok: true
@@ -326,6 +326,7 @@ service_firewalld_enabled: true
 service_kdump_disabled: true
 service_systemd_coredump_disabled: true
 service_usbguard_enabled: true
+special_service_block: true
 ssh_client_rekey_limit: true
 ssh_client_use_strong_rng_csh: true
 ssh_client_use_strong_rng_sh: true
