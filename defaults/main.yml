@@ -44,6 +44,7 @@ var_ssh_client_rekey_limit_time: 1h
 sshd_idle_timeout_value: '840'
 var_rekey_limit_size: 1G
 var_rekey_limit_time: 1h
+var_audit_backlog_limit: '8192'
 var_auditd_flush: incremental_async
 var_auditd_freq: '50'
 var_auditd_name_format: hostname
