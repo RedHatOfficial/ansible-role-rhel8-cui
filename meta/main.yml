@@ -29,4 +29,8 @@ galaxy_info:
   - cui
 
 
+collections:
+  - community.general
+  - ansible.posix
+
 dependencies: []
