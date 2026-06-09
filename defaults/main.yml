@@ -35,7 +35,6 @@ sysctl_net_ipv4_conf_default_secure_redirects_value: '0'
 sysctl_net_ipv4_icmp_echo_ignore_broadcasts_value: '1'
 sysctl_net_ipv4_icmp_ignore_bogus_error_responses_value: '1'
 sysctl_net_ipv4_tcp_syncookies_value: '1'
-sysctl_kernel_kptr_restrict_value: '1'
 var_slub_debug_options: P
 var_selinux_policy_name: targeted
 var_selinux_state: enforcing
@@ -213,6 +212,7 @@ auditd_log_format: true
 auditd_name_format: true
 auditd_write_logs: true
 chronyd_client_only: true
+chronyd_configure_local_socket: true
 chronyd_no_chronyc_network: true
 configure_bashrc_exec_tmux: true
 configure_bind_crypto_policy: true
@@ -382,7 +382,6 @@ sysctl_user_max_user_namespaces: true
 unknown_severity: true
 unknown_strategy: true
 usbguard_allow_hid_and_hub: true
-use_pam_wheel_for_su: true
 zipl_audit_argument: true
 zipl_audit_backlog_limit_argument: true
 zipl_bootmap_is_up_to_date: true
