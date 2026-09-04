@@ -412,9 +412,9 @@
   - medium_severity | bool
   - no_reboot_needed | bool
   - package_dnf_automatic_installed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82985-3
   - enable_strategy
@@ -1357,6 +1357,7 @@
     path: /etc/ipsec.conf
     line: include /etc/crypto-policies/back-ends/libreswan.config
     create: true
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_010280 | bool
   - configure_libreswan_crypto_policy | bool
@@ -1451,6 +1452,7 @@
     insertafter: ^\s*\[\s*crypto_policy\s*]\s*
     line: .include /etc/crypto-policies/back-ends/opensslcnf.config
     path: /etc/pki/tls/openssl.cnf
+    mode: 420
   when:
   - configure_openssl_crypto_policy | bool
   - low_complexity | bool
@@ -1486,6 +1488,7 @@
 
       .include /etc/crypto-policies/back-ends/opensslcnf.config'
     path: /etc/pki/tls/openssl.cnf
+    mode: 420
   when:
   - configure_openssl_crypto_policy | bool
   - low_complexity | bool
@@ -1575,15 +1578,16 @@
     option: apply_updates
     value: 'yes'
     create: true
+    mode: 420
   when:
   - low_complexity | bool
   - medium_disruption | bool
   - medium_severity | bool
   - no_reboot_needed | bool
   - unknown_strategy | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82494-6
   - NIST-800-53-CM-6(a)
@@ -1603,15 +1607,16 @@
     option: upgrade_type
     value: security
     create: true
+    mode: 420
   when:
   - low_complexity | bool
   - low_severity | bool
   - medium_disruption | bool
   - no_reboot_needed | bool
   - unknown_strategy | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82267-6
   - NIST-800-53-CM-6(a)
@@ -1682,6 +1687,7 @@
       value: 1
       no_extra_spaces: true
       create: true
+      mode: 420
   when:
   - DISA_STIG_RHEL_08_010371 | bool
   - ensure_gpgcheck_local_packages | bool
@@ -1968,9 +1974,9 @@
   - low_disruption | bool
   - medium_severity | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82360-9
   - NIST-800-53-CM-6(a)
@@ -4999,6 +5005,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*dcredit
     line: dcredit = {{ var_password_pam_dcredit }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020130 | bool
   - accounts_password_pam_dcredit | bool
@@ -5093,6 +5100,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*difok
     line: difok = {{ var_password_pam_difok }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020170 | bool
   - accounts_password_pam_difok | bool
@@ -5189,6 +5197,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*lcredit
     line: lcredit = {{ var_password_pam_lcredit }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020120 | bool
   - accounts_password_pam_lcredit | bool
@@ -5284,6 +5293,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*maxclassrepeat
     line: maxclassrepeat = {{ var_password_pam_maxclassrepeat }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020140 | bool
   - accounts_password_pam_maxclassrepeat | bool
@@ -5371,6 +5381,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*maxrepeat
     line: maxrepeat = {{ var_password_pam_maxrepeat }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020150 | bool
   - accounts_password_pam_maxrepeat | bool
@@ -5467,6 +5478,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*minlen
     line: minlen = {{ var_password_pam_minlen }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020230 | bool
   - accounts_password_pam_minlen | bool
@@ -5560,6 +5572,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*ocredit
     line: ocredit = {{ var_password_pam_ocredit }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020280 | bool
   - accounts_password_pam_ocredit | bool
@@ -5651,6 +5664,7 @@
     dest: /etc/security/pwquality.conf
     regexp: ^#?\s*ucredit
     line: ucredit = {{ var_password_pam_ucredit }}
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020110 | bool
   - accounts_password_pam_ucredit | bool
@@ -5683,6 +5697,7 @@
     regexp: ^CtrlAltDelBurstAction
     line: CtrlAltDelBurstAction=none
     create: true
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040172 | bool
   - disable_ctrlaltdel_burstaction | bool
@@ -5906,6 +5921,7 @@
 - name: 'Support session locking with tmux: Insert the Correct Script into /etc/profile.d/tmux.sh'
   ansible.builtin.blockinfile:
     path: /etc/profile.d/tmux.sh
+    mode: 420
     block: "if [ \"$PS1\" ]; then\n  parent=$(ps -o ppid= -p $$)\n  name=$(ps -o comm= -p $parent)\n  case \"$name\" in sshd|login)\
       \ exec tmux ;; esac\nfi\n"
     create: true
@@ -6285,6 +6301,7 @@
     regexp: ^#?\*.*maxlogins
     line: '*          hard    maxlogins     {{ var_accounts_max_concurrent_login_sessions }}'
     create: true
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_020024 | bool
   - accounts_max_concurrent_login_sessions | bool
@@ -6317,6 +6334,7 @@
   changed_when: false
   register: umask_replace
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_bashrc | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6326,6 +6344,7 @@
   - '"bash" in ansible_facts.packages'
   tags:
   - CCE-81036-6
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_bashrc
@@ -6341,6 +6360,7 @@
     regexp: ^([^#]*\b)umask\s+\d+$
     replace: \g<1>umask {{ var_accounts_user_umask }}
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_bashrc | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6351,6 +6371,7 @@
   - umask_replace.found > 0
   tags:
   - CCE-81036-6
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_bashrc
@@ -6365,7 +6386,9 @@
     create: true
     path: /etc/bashrc
     line: umask {{ var_accounts_user_umask }}
+    mode: 420
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_bashrc | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6376,6 +6399,7 @@
   - umask_replace.found == 0
   tags:
   - CCE-81036-6
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_bashrc
@@ -6394,6 +6418,7 @@
   changed_when: false
   register: umask_replace
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_csh_cshrc | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6403,6 +6428,7 @@
   - '"tcsh" in ansible_facts.packages'
   tags:
   - CCE-81037-4
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_csh_cshrc
@@ -6418,6 +6444,7 @@
     regexp: ^(\s*)umask(\s+).*
     replace: \g<1>umask\g<2>{{ var_accounts_user_umask }}
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_csh_cshrc | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6428,6 +6455,7 @@
   - umask_replace.found > 0
   tags:
   - CCE-81037-4
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_csh_cshrc
@@ -6442,7 +6470,9 @@
     create: true
     path: /etc/csh.cshrc
     line: umask {{ var_accounts_user_umask }}
+    mode: 420
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_csh_cshrc | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6453,6 +6483,7 @@
   - umask_replace.found == 0
   tags:
   - CCE-81037-4
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_csh_cshrc
@@ -6473,6 +6504,7 @@
   register: result_profile_d_files
   tags:
   - CCE-81035-8
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_profile
@@ -6482,6 +6514,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_profile | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6497,6 +6530,7 @@
   loop: '{{ result_profile_d_files.files }}'
   register: result_umask_replaced_profile_d
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_profile | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6506,6 +6540,7 @@
   - result_profile_d_files.matched
   tags:
   - CCE-81035-8
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_profile
@@ -6523,6 +6558,7 @@
     path: /etc/profile
     line: umask {{ var_accounts_user_umask }}
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_profile | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6532,6 +6568,7 @@
   - not result_profile_d_files.matched
   tags:
   - CCE-81035-8
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_profile
@@ -6550,6 +6587,7 @@
   register: result_umask_replaced_profile
   tags:
   - CCE-81035-8
+  - DISA-STIG-RHEL-08-020353
   - NIST-800-53-AC-6(1)
   - NIST-800-53-CM-6(a)
   - accounts_umask_etc_profile
@@ -6559,6 +6597,7 @@
   - no_reboot_needed
   - restrict_strategy
   when:
+  - DISA_STIG_RHEL_08_020353 | bool
   - accounts_umask_etc_profile | bool
   - low_complexity | bool
   - low_disruption | bool
@@ -6854,6 +6893,7 @@
       create: true
       path: /etc/kernel/cmdline
       line: audit=1
+      mode: 420
     when: cmdline_stat is defined and not cmdline_stat.stat.exists
   - name: Append /etc/kernel/cmdline contains audit=1
     ansible.builtin.lineinfile:
@@ -6911,6 +6951,7 @@
       create: true
       path: /etc/kernel/cmdline
       line: audit_backlog_limit=8192
+      mode: 420
     when: cmdline_stat is defined and not cmdline_stat.stat.exists
   - name: Append /etc/kernel/cmdline contains audit_backlog_limit=8192
     ansible.builtin.lineinfile:
@@ -6968,6 +7009,7 @@
       create: true
       path: /etc/kernel/cmdline
       line: page_poison=1
+      mode: 420
     when: cmdline_stat is defined and not cmdline_stat.stat.exists
   - name: Append /etc/kernel/cmdline contains page_poison=1
     ansible.builtin.lineinfile:
@@ -7025,6 +7067,7 @@
       create: true
       path: /etc/kernel/cmdline
       line: slub_debug=P
+      mode: 420
     when: cmdline_stat is defined and not cmdline_stat.stat.exists
   - name: Append /etc/kernel/cmdline contains slub_debug=P
     ansible.builtin.lineinfile:
@@ -8645,6 +8688,7 @@
     - /run/sysctl.d/
     - /usr/local/lib/sysctl.d/
   when:
+  - DISA_STIG_RHEL_08_040221 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -8654,6 +8698,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81018-4
+  - DISA-STIG-RHEL-08-040221
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -8673,6 +8718,7 @@
   changed_when: false
   failed_when: false
   when:
+  - DISA_STIG_RHEL_08_040221 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -8682,6 +8728,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81018-4
+  - DISA-STIG-RHEL-08-040221
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -8703,6 +8750,7 @@
   changed_when: false
   failed_when: false
   when:
+  - DISA_STIG_RHEL_08_040221 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -8712,6 +8760,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81018-4
+  - DISA-STIG-RHEL-08-040221
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -8731,6 +8780,7 @@
     replace: '#net.ipv4.conf.all.log_martians'
   loop: '{{ find_all_values.stdout_lines }}'
   when:
+  - DISA_STIG_RHEL_08_040221 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -8742,6 +8792,7 @@
     | length
   tags:
   - CCE-81018-4
+  - DISA-STIG-RHEL-08-040221
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -8762,6 +8813,7 @@
   with_fileglob:
   - /etc/sysctl.conf
   when:
+  - DISA_STIG_RHEL_08_040221 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -8771,6 +8823,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81018-4
+  - DISA-STIG-RHEL-08-040221
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -8791,6 +8844,7 @@
     state: present
     reload: true
   when:
+  - DISA_STIG_RHEL_08_040221 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -8800,6 +8854,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81018-4
+  - DISA-STIG-RHEL-08-040221
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9639,6 +9694,7 @@
     - /run/sysctl.d/
     - /usr/local/lib/sysctl.d/
   when:
+  - DISA_STIG_RHEL_08_040222 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9648,6 +9704,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81020-0
+  - DISA-STIG-RHEL-08-040222
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9667,6 +9724,7 @@
   changed_when: false
   failed_when: false
   when:
+  - DISA_STIG_RHEL_08_040222 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9676,6 +9734,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81020-0
+  - DISA-STIG-RHEL-08-040222
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9697,6 +9756,7 @@
   changed_when: false
   failed_when: false
   when:
+  - DISA_STIG_RHEL_08_040222 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9706,6 +9766,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81020-0
+  - DISA-STIG-RHEL-08-040222
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9725,6 +9786,7 @@
     replace: '#net.ipv4.conf.default.log_martians'
   loop: '{{ find_all_values.stdout_lines }}'
   when:
+  - DISA_STIG_RHEL_08_040222 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9736,6 +9798,7 @@
     | length
   tags:
   - CCE-81020-0
+  - DISA-STIG-RHEL-08-040222
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9756,6 +9819,7 @@
   with_fileglob:
   - /etc/sysctl.conf
   when:
+  - DISA_STIG_RHEL_08_040222 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9765,6 +9829,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81020-0
+  - DISA-STIG-RHEL-08-040222
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9785,6 +9850,7 @@
     state: present
     reload: true
   when:
+  - DISA_STIG_RHEL_08_040222 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9794,6 +9860,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81020-0
+  - DISA-STIG-RHEL-08-040222
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-7(a)
   - NIST-800-53-CM-7(b)
@@ -9812,6 +9879,7 @@
     - /run/sysctl.d/
     - /usr/local/lib/sysctl.d/
   when:
+  - DISA_STIG_RHEL_08_040287 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9821,6 +9889,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81022-6
+  - DISA-STIG-RHEL-08-040287
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -9842,6 +9911,7 @@
   changed_when: false
   failed_when: false
   when:
+  - DISA_STIG_RHEL_08_040287 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9851,6 +9921,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81022-6
+  - DISA-STIG-RHEL-08-040287
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -9873,6 +9944,7 @@
   changed_when: false
   failed_when: false
   when:
+  - DISA_STIG_RHEL_08_040287 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9882,6 +9954,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81022-6
+  - DISA-STIG-RHEL-08-040287
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -9902,6 +9975,7 @@
     replace: '#net.ipv4.conf.default.rp_filter'
   loop: '{{ find_all_values.stdout_lines }}'
   when:
+  - DISA_STIG_RHEL_08_040287 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9913,6 +9987,7 @@
     | length
   tags:
   - CCE-81022-6
+  - DISA-STIG-RHEL-08-040287
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -9934,6 +10009,7 @@
   with_fileglob:
   - /etc/sysctl.conf
   when:
+  - DISA_STIG_RHEL_08_040287 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9943,6 +10019,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81022-6
+  - DISA-STIG-RHEL-08-040287
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -9964,6 +10041,7 @@
     state: present
     reload: true
   when:
+  - DISA_STIG_RHEL_08_040287 | bool
   - disable_strategy | bool
   - low_complexity | bool
   - medium_disruption | bool
@@ -9973,6 +10051,7 @@
   - '"kernel-core" in ansible_facts.packages'
   tags:
   - CCE-81022-6
+  - DISA-STIG-RHEL-08-040287
   - NIST-800-171-3.1.20
   - NIST-800-53-CM-6(a)
   - NIST-800-53-CM-7(a)
@@ -11420,6 +11499,7 @@
     dest: /etc/modprobe.d/atm.conf
     regexp: install\s+atm
     line: install atm /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040021 | bool
   - disable_strategy | bool
@@ -11446,6 +11526,7 @@
     dest: /etc/modprobe.d/atm.conf
     regexp: ^blacklist atm$
     line: blacklist atm
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040021 | bool
   - disable_strategy | bool
@@ -11472,6 +11553,7 @@
     dest: /etc/modprobe.d/can.conf
     regexp: install\s+can
     line: install can /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040022 | bool
   - disable_strategy | bool
@@ -11498,6 +11580,7 @@
     dest: /etc/modprobe.d/can.conf
     regexp: ^blacklist can$
     line: blacklist can
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040022 | bool
   - disable_strategy | bool
@@ -11524,6 +11607,7 @@
     dest: /etc/modprobe.d/firewire-core.conf
     regexp: install\s+firewire-core
     line: install firewire-core /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040026 | bool
   - disable_strategy | bool
@@ -11549,6 +11633,7 @@
     dest: /etc/modprobe.d/firewire-core.conf
     regexp: ^blacklist firewire-core$
     line: blacklist firewire-core
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040026 | bool
   - disable_strategy | bool
@@ -11574,6 +11659,7 @@
     dest: /etc/modprobe.d/sctp.conf
     regexp: install\s+sctp
     line: install sctp /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040023 | bool
   - disable_strategy | bool
@@ -11607,6 +11693,7 @@
     dest: /etc/modprobe.d/sctp.conf
     regexp: ^blacklist sctp$
     line: blacklist sctp
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040023 | bool
   - disable_strategy | bool
@@ -11640,6 +11727,7 @@
     dest: /etc/modprobe.d/tipc.conf
     regexp: install\s+tipc
     line: install tipc /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040024 | bool
   - disable_strategy | bool
@@ -11668,6 +11756,7 @@
     dest: /etc/modprobe.d/tipc.conf
     regexp: ^blacklist tipc$
     line: blacklist tipc
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040024 | bool
   - disable_strategy | bool
@@ -11696,6 +11785,7 @@
     dest: /etc/modprobe.d/bluetooth.conf
     regexp: install\s+bluetooth
     line: install bluetooth /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040111 | bool
   - disable_strategy | bool
@@ -11729,6 +11819,7 @@
     dest: /etc/modprobe.d/bluetooth.conf
     regexp: ^blacklist bluetooth$
     line: blacklist bluetooth
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040111 | bool
   - disable_strategy | bool
@@ -12100,6 +12191,7 @@
     dest: /etc/modprobe.d/cramfs.conf
     regexp: install\s+cramfs
     line: install cramfs /bin/false
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040025 | bool
   - disable_strategy | bool
@@ -12129,6 +12221,7 @@
     dest: /etc/modprobe.d/cramfs.conf
     regexp: ^blacklist cramfs$
     line: blacklist cramfs
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_040025 | bool
   - disable_strategy | bool
@@ -12165,9 +12258,9 @@
   - medium_severity | bool
   - mount_option_boot_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82941-6
   - NIST-800-53-AC-6
@@ -12196,9 +12289,9 @@
   - medium_severity | bool
   - mount_option_boot_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -12235,9 +12328,9 @@
   - medium_severity | bool
   - mount_option_boot_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length == 0)
@@ -12267,9 +12360,9 @@
   - medium_severity | bool
   - mount_option_boot_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
   - CCE-82941-6
@@ -12305,9 +12398,9 @@
   - medium_severity | bool
   - mount_option_boot_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
@@ -12339,9 +12432,9 @@
   - medium_severity | bool
   - mount_option_boot_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-81033-3
   - DISA-STIG-RHEL-08-010571
@@ -12372,9 +12465,9 @@
   - medium_severity | bool
   - mount_option_boot_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -12413,9 +12506,9 @@
   - medium_severity | bool
   - mount_option_boot_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length == 0)
@@ -12447,9 +12540,9 @@
   - medium_severity | bool
   - mount_option_boot_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
   - CCE-81033-3
@@ -12487,9 +12580,9 @@
   - medium_severity | bool
   - mount_option_boot_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
   tags:
@@ -12522,9 +12615,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-80837-8
   - DISA-STIG-RHEL-08-040120
@@ -12555,9 +12648,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -12596,9 +12689,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - ("" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length == 0)
@@ -12630,9 +12723,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
   - CCE-80837-8
@@ -12670,9 +12763,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("" | length == 0)
   tags:
@@ -12705,9 +12798,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-80838-6
   - DISA-STIG-RHEL-08-040122
@@ -12738,9 +12831,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -12779,9 +12872,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - ("" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length == 0)
@@ -12813,9 +12906,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined and "noexec" not in (mount_info.options | default(''))
   tags:
   - CCE-80838-6
@@ -12853,9 +12946,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("" | length == 0)
   tags:
@@ -12888,9 +12981,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-80839-4
   - DISA-STIG-RHEL-08-040121
@@ -12921,9 +13014,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
   tags:
@@ -12962,9 +13055,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - ("" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length == 0)
@@ -12996,9 +13089,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
   - CCE-80839-4
@@ -13036,9 +13129,9 @@
   - medium_severity | bool
   - mount_option_dev_shm_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("" | length == 0)
   tags:
@@ -13070,9 +13163,9 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-81048-1
@@ -13096,9 +13189,9 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -13130,9 +13223,9 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -13157,9 +13250,9 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
@@ -13190,9 +13283,9 @@
   - mount_option_home_nodev | bool
   - no_reboot_needed | bool
   - unknown_severity | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -13219,9 +13312,9 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-81050-7
@@ -13253,9 +13346,9 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -13295,9 +13388,9 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -13330,9 +13423,9 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
@@ -13371,9 +13464,9 @@
   - medium_severity | bool
   - mount_option_home_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/home" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -13404,9 +13497,9 @@
   - medium_severity | bool
   - mount_option_nodev_nonroot_local_partitions | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82069-6
   - DISA-STIG-RHEL-08-010580
@@ -13454,9 +13547,9 @@
   - medium_severity | bool
   - mount_option_nodev_nonroot_local_partitions | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82069-6
   - DISA-STIG-RHEL-08-010580
@@ -13488,9 +13581,9 @@
   - medium_severity | bool
   - mount_option_nodev_nonroot_local_partitions | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - item.mount is match('/\w')
   - item.mount is not match('/(boot|efi)')
   - item.options is not search('nodev')
@@ -13528,9 +13621,9 @@
   - medium_severity | bool
   - mount_option_nodev_nonroot_local_partitions | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   tags:
   - CCE-82069-6
   - DISA-STIG-RHEL-08-010580
@@ -13561,9 +13654,9 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82623-0
@@ -13595,9 +13688,9 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -13637,9 +13730,9 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -13672,9 +13765,9 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
@@ -13713,9 +13806,9 @@
   - medium_severity | bool
   - mount_option_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -13749,9 +13842,9 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82139-7
@@ -13783,9 +13876,9 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -13825,9 +13918,9 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -13860,9 +13953,9 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "noexec" not in (mount_info.options | default(''))
   tags:
@@ -13901,9 +13994,9 @@
   - medium_severity | bool
   - mount_option_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -13937,9 +14030,9 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82140-5
@@ -13971,9 +14064,9 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -14013,9 +14106,9 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -14048,9 +14141,9 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
@@ -14089,9 +14182,9 @@
   - medium_severity | bool
   - mount_option_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -14125,9 +14218,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82080-3
@@ -14159,9 +14252,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -14201,9 +14294,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -14236,9 +14329,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
@@ -14277,9 +14370,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -14313,9 +14406,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82975-4
@@ -14347,9 +14440,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -14389,9 +14482,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -14424,9 +14517,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "noexec" not in (mount_info.options | default(''))
   tags:
@@ -14465,9 +14558,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -14501,9 +14594,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82921-8
@@ -14535,9 +14628,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -14577,9 +14670,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -14612,9 +14705,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
@@ -14653,9 +14746,9 @@
   - medium_severity | bool
   - mount_option_var_log_audit_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log/audit" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -14689,9 +14782,9 @@
   - medium_severity | bool
   - mount_option_var_log_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82077-9
@@ -14723,9 +14816,9 @@
   - medium_severity | bool
   - mount_option_var_log_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -14765,9 +14858,9 @@
   - medium_severity | bool
   - mount_option_var_log_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -14800,9 +14893,9 @@
   - medium_severity | bool
   - mount_option_var_log_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
@@ -14841,9 +14934,9 @@
   - medium_severity | bool
   - mount_option_var_log_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -14877,9 +14970,9 @@
   - medium_severity | bool
   - mount_option_var_log_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82008-4
@@ -14911,9 +15004,9 @@
   - medium_severity | bool
   - mount_option_var_log_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -14953,9 +15046,9 @@
   - medium_severity | bool
   - mount_option_var_log_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -14988,9 +15081,9 @@
   - medium_severity | bool
   - mount_option_var_log_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "noexec" not in (mount_info.options | default(''))
   tags:
@@ -15029,9 +15122,9 @@
   - medium_severity | bool
   - mount_option_var_log_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -15065,9 +15158,9 @@
   - medium_severity | bool
   - mount_option_var_log_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82065-4
@@ -15099,9 +15192,9 @@
   - medium_severity | bool
   - mount_option_var_log_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -15141,9 +15234,9 @@
   - medium_severity | bool
   - mount_option_var_log_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -15176,9 +15269,9 @@
   - medium_severity | bool
   - mount_option_var_log_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
@@ -15217,9 +15310,9 @@
   - medium_severity | bool
   - mount_option_var_log_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/log" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -15252,9 +15345,9 @@
   - medium_severity | bool
   - mount_option_var_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82062-1
@@ -15284,9 +15377,9 @@
   - medium_severity | bool
   - mount_option_var_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -15324,9 +15417,9 @@
   - medium_severity | bool
   - mount_option_var_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -15357,9 +15450,9 @@
   - medium_severity | bool
   - mount_option_var_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
@@ -15396,9 +15489,9 @@
   - medium_severity | bool
   - mount_option_var_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -15431,9 +15524,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82068-8
@@ -15459,9 +15552,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -15495,9 +15588,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -15524,9 +15617,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nodev" not in (mount_info.options | default(''))
   tags:
@@ -15559,9 +15652,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nodev | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -15589,9 +15682,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82151-2
@@ -15617,9 +15710,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -15653,9 +15746,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -15682,9 +15775,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "noexec" not in (mount_info.options | default(''))
   tags:
@@ -15717,9 +15810,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_noexec | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -15747,9 +15840,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   tags:
   - CCE-82154-6
@@ -15775,9 +15868,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - device_name.stdout is defined and device_name.stdout_lines is defined
   - (device_name.stdout | length > 0)
@@ -15811,9 +15904,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - ("--fstab" | length == 0)
   - device_name.stdout is defined and device_name.stdout_lines is defined
@@ -15840,9 +15933,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined and "nosuid" not in (mount_info.options | default(''))
   tags:
@@ -15875,9 +15968,9 @@
   - medium_severity | bool
   - mount_option_var_tmp_nosuid | bool
   - no_reboot_needed | bool
-  - ( not ( "kernel-core" in ansible_facts.packages and "rpm-ostree" in ansible_facts.packages and "bootc" in ansible_facts.packages
-    and not "openshift-kubelet" in ansible_facts.packages and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type
-    in ["docker", "lxc", "openvz", "podman", "container"] ) )
+  - ( not ( "kernel-core" in ansible_facts.packages and "bootc" in ansible_facts.packages and not "openshift-kubelet" in ansible_facts.packages
+    and "ostree" in ansible_proc_cmdline ) and not ( ansible_virtualization_type in ["docker", "lxc", "openvz", "podman",
+    "container"] ) )
   - '"/var/tmp" in ansible_mounts | map(attribute="mount") | list'
   - mount_info is defined
   - (device_name.stdout is defined and (device_name.stdout | length > 0)) or ("--fstab" | length == 0)
@@ -17397,6 +17490,7 @@
     state: present
     no_extra_spaces: true
     create: true
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_010675 | bool
   - coredump_disable_backtraces | bool
@@ -17535,6 +17629,7 @@
     state: present
     no_extra_spaces: true
     create: true
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_010674 | bool
   - coredump_disable_storage | bool
@@ -17785,6 +17880,7 @@
   ansible.builtin.file:
     path: '{{ limits_dropin_dir }}'
     state: directory
+    mode: '0755'
   when:
   - DISA_STIG_RHEL_08_010673 | bool
   - disable_users_coredumps | bool
@@ -17817,6 +17913,7 @@
     content: '*     hard   core    0
 
       '
+    mode: '0644'
   when:
   - DISA_STIG_RHEL_08_010673 | bool
   - disable_users_coredumps | bool
@@ -18314,6 +18411,7 @@
     state: touch
     access_time: preserve
     modification_time: preserve
+    mode: 420
   when:
   - DISA_STIG_RHEL_08_010170 | bool
   - high_severity | bool
@@ -18700,6 +18798,7 @@
     line: setenv SSH_USE_STRONG_RNG 32
     state: present
     create: true
+    mode: 420
   when:
   - configure_strategy | bool
   - low_complexity | bool
@@ -18746,6 +18845,7 @@
     line: export SSH_USE_STRONG_RNG=32
     state: present
     create: true
+    mode: 420
   when:
   - configure_strategy | bool
   - low_complexity | bool
@@ -18792,6 +18892,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*ClientAliveCountMax\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -18801,6 +18902,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*ClientAliveCountMax\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -18808,6 +18910,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*ClientAliveCountMax\s+
+      mode: '0600'
       line: ClientAliveCountMax 0
       state: present
       insertbefore: BOF
@@ -18844,6 +18947,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*ClientAliveInterval\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -18853,6 +18957,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*ClientAliveInterval\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -18860,6 +18965,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*ClientAliveInterval\s+
+      mode: '0600'
       line: ClientAliveInterval {{ sshd_idle_timeout_value }}
       state: present
       insertbefore: BOF
@@ -18902,6 +19008,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*HostbasedAuthentication\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -18911,6 +19018,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*HostbasedAuthentication\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -18918,6 +19026,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*HostbasedAuthentication\s+
+      mode: '0600'
       line: HostbasedAuthentication no
       state: present
       insertbefore: BOF
@@ -18955,6 +19064,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*PermitEmptyPasswords\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -18964,6 +19074,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*PermitEmptyPasswords\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -18971,6 +19082,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*PermitEmptyPasswords\s+
+      mode: '0600'
       line: PermitEmptyPasswords no
       state: present
       insertbefore: BOF
@@ -19011,6 +19123,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*GSSAPIAuthentication\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -19020,6 +19133,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*GSSAPIAuthentication\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -19027,6 +19141,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*GSSAPIAuthentication\s+
+      mode: '0600'
       line: GSSAPIAuthentication no
       state: present
       insertbefore: BOF
@@ -19062,6 +19177,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*KerberosAuthentication\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -19071,6 +19187,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*KerberosAuthentication\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -19078,6 +19195,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*KerberosAuthentication\s+
+      mode: '0600'
       line: KerberosAuthentication no
       state: present
       insertbefore: BOF
@@ -19113,6 +19231,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*PermitRootLogin\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -19122,6 +19241,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*PermitRootLogin\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -19129,6 +19249,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*PermitRootLogin\s+
+      mode: '0600'
       line: PermitRootLogin no
       state: present
       insertbefore: BOF
@@ -19172,6 +19293,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*StrictModes\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -19181,6 +19303,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*StrictModes\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -19188,6 +19311,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*StrictModes\s+
+      mode: '0600'
       line: StrictModes yes
       state: present
       insertbefore: BOF
@@ -19222,6 +19346,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*Banner\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -19231,6 +19356,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*Banner\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -19238,6 +19364,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*Banner\s+
+      mode: '0600'
       line: Banner /etc/issue
       state: present
       insertbefore: BOF
@@ -19275,6 +19402,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*RekeyLimit\s+
+      mode: '0600'
       state: absent
     check_mode: true
     changed_when: false
@@ -19284,6 +19412,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*RekeyLimit\s+
+      mode: '0600'
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/ssh/sshd_config
@@ -19291,6 +19420,7 @@
       path: /etc/ssh/sshd_config
       create: true
       regexp: (?i)(?i)^\s*RekeyLimit\s+
+      mode: '0600'
       line: RekeyLimit {{ var_rekey_limit_size }} {{ var_rekey_limit_time }}
       state: present
       insertbefore: BOF
@@ -19627,6 +19757,7 @@
     line: flush = {{ var_auditd_flush }}
     state: present
     create: true
+    mode: u-x,g-wx,o-rwx
   when:
   - auditd_data_retention_flush | bool
   - low_complexity | bool
@@ -19655,6 +19786,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*freq\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     check_mode: true
     changed_when: false
@@ -19664,6 +19796,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*freq\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/audit/auditd.conf
@@ -19671,6 +19804,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*freq\s*=\s*
+      mode: u-x,g-wx,o-rwx
       line: freq = {{ var_auditd_freq }}
       state: present
   when:
@@ -19699,6 +19833,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*local_events\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     check_mode: true
     changed_when: false
@@ -19708,6 +19843,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*local_events\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/audit/auditd.conf
@@ -19715,6 +19851,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*local_events\s*=\s*
+      mode: u-x,g-wx,o-rwx
       line: local_events = yes
       state: present
   when:
@@ -19745,6 +19882,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*log_format\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     check_mode: true
     changed_when: false
@@ -19754,6 +19892,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*log_format\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/audit/auditd.conf
@@ -19761,6 +19900,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*log_format\s*=\s*
+      mode: u-x,g-wx,o-rwx
       line: log_format = ENRICHED
       state: present
   when:
@@ -19818,6 +19958,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*name_format\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     check_mode: true
     changed_when: false
@@ -19827,6 +19968,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*name_format\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/audit/auditd.conf
@@ -19834,6 +19976,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*name_format\s*=\s*
+      mode: u-x,g-wx,o-rwx
       line: name_format = {{ auditd_name_format_split }}
       state: present
   when:
@@ -19867,6 +20010,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*write_logs\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     check_mode: true
     changed_when: false
@@ -19876,6 +20020,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*write_logs\s*=\s*
+      mode: u-x,g-wx,o-rwx
       state: absent
     when: dupes.found is defined and dupes.found > 1
   - name: Insert correct line to /etc/audit/auditd.conf
@@ -19883,6 +20028,7 @@
       path: /etc/audit/auditd.conf
       create: true
       regexp: (?i)(?i)^\s*write_logs\s*=\s*
+      mode: u-x,g-wx,o-rwx
       line: write_logs = yes
       state: present
   when:
@@ -19921,6 +20067,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_access_failed | bool
   - low_complexity | bool
@@ -19975,6 +20122,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_access_success | bool
   - low_complexity | bool
@@ -20043,6 +20191,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_basic_configuration | bool
   - low_complexity | bool
@@ -20115,6 +20264,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_create_failed | bool
   - low_complexity | bool
@@ -20175,6 +20325,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_create_success | bool
   - low_complexity | bool
@@ -20231,6 +20382,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_delete_failed | bool
   - low_complexity | bool
@@ -20283,6 +20435,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_delete_success | bool
   - low_complexity | bool
@@ -20334,6 +20487,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_immutable_login_uids | bool
   - low_complexity | bool
@@ -20406,6 +20560,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_modify_failed | bool
   - low_complexity | bool
@@ -20466,6 +20621,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_modify_success | bool
   - low_complexity | bool
@@ -20524,6 +20680,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_module_load | bool
   - low_complexity | bool
@@ -20792,6 +20949,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_ospp_general | bool
   - low_complexity | bool
@@ -20848,6 +21006,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_owner_change_failed | bool
   - low_complexity | bool
@@ -20900,6 +21059,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_owner_change_success | bool
   - low_complexity | bool
@@ -20960,6 +21120,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_perm_change_failed | bool
   - low_complexity | bool
@@ -21014,6 +21175,7 @@
 
       '
     force: true
+    mode: 420
   when:
   - audit_perm_change_success | bool
   - low_complexity | bool
